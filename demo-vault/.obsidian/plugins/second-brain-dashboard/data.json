@@ -1,0 +1,234 @@
+{
+  "projectFolder": "Projects",
+  "projectTag": "project",
+  "projectTypeField": "type",
+  "projectTypeValue": "project",
+  "useCoreDailyNotes": true,
+  "dailyFolder": "Daily",
+  "dailyFormat": "YYYY-MM-DD",
+  "inboxFile": "Inbox.md",
+  "captureTarget": "daily",
+  "labels": [
+    {
+      "name": "urgent",
+      "color": "#e5484d"
+    },
+    {
+      "name": "needs-to-be-done",
+      "color": "#f76b15"
+    },
+    {
+      "name": "quick-win",
+      "color": "#30a46c"
+    },
+    {
+      "name": "deep-work",
+      "color": "#6e56cf"
+    },
+    {
+      "name": "waiting-on-someone",
+      "color": "#0090ff"
+    },
+    {
+      "name": "errand",
+      "color": "#ad7f58"
+    },
+    {
+      "name": "call",
+      "color": "#12a594"
+    }
+  ],
+  "statusChars": {
+    "todo": " ",
+    "in-progress": "/",
+    "waiting": "?",
+    "done": "x",
+    "cancelled": "-"
+  },
+  "urgentEscalationDays": 2,
+  "deadlineWindowDays": 14,
+  "excludeFolders": [
+    "Templates",
+    "_templates"
+  ],
+  "defaultTaskView": "kanban",
+  "openOnStartup": false,
+  "weekStartsMonday": true,
+  "appearance": {
+    "title": "second brain",
+    "icon": "brain",
+    "banner": "Attachments/pixel-fish.png",
+    "bannerPosition": 46,
+    "style": "mono",
+    "quotes": [
+      "Discipline will take you places where motivation can't.",
+      "Your mind is for having ideas, not holding them.",
+      "Small steps every day."
+    ],
+    "showQuote": true,
+    "showCountdown": true,
+    "countdownDate": "",
+    "countdownLabel": "",
+    "showTimeProgress": true,
+    "showClock": true,
+    "images": [
+      {
+        "src": "Attachments/pixel-fish.png",
+        "fit": "contain",
+        "pixelated": true
+      }
+    ],
+    "layout": [
+      {
+        "id": "quicklinks",
+        "hidden": false
+      },
+      {
+        "id": "todo",
+        "hidden": false
+      },
+      {
+        "id": "habits",
+        "hidden": false
+      },
+      {
+        "id": "widgets",
+        "hidden": false
+      },
+      {
+        "id": "notebook",
+        "hidden": false
+      },
+      {
+        "id": "lab",
+        "hidden": false
+      }
+    ]
+  },
+  "quickLinks": [
+    {
+      "label": "library",
+      "icon": "library",
+      "color": "orange",
+      "target": "Books"
+    },
+    {
+      "label": "projects",
+      "icon": "folder-kanban",
+      "color": "purple",
+      "target": "Projects"
+    },
+    {
+      "label": "daily",
+      "icon": "calendar-days",
+      "color": "red",
+      "target": "Daily"
+    },
+    {
+      "label": "notes",
+      "icon": "lightbulb",
+      "color": "green",
+      "target": "Notes"
+    },
+    {
+      "label": "meetings",
+      "icon": "users",
+      "color": "blue",
+      "target": "Meetings"
+    },
+    {
+      "label": "health",
+      "icon": "heart-pulse",
+      "color": "pink",
+      "target": "#habits"
+    }
+  ],
+  "habits": [
+    {
+      "key": "gym",
+      "label": "Workout",
+      "icon": "dumbbell",
+      "target": 4
+    },
+    {
+      "key": "read",
+      "label": "Read",
+      "icon": "book-open",
+      "target": 5
+    },
+    {
+      "key": "meditate",
+      "label": "Meditate",
+      "icon": "brain",
+      "target": 5
+    },
+    {
+      "key": "journal",
+      "label": "Journal",
+      "icon": "notebook-pen",
+      "target": 7
+    }
+  ],
+  "trackers": [],
+  "taskOrder": {
+    "todo": [
+      "Daily/2026-10-18.md::Pay electricity bill",
+      "Daily/2026-10-18.md::Review Website Redesign wireframes with team",
+      "Projects/Website Redesign.md::Finalize homepage wireframes",
+      "Projects/Client Onboarding/Client Onboarding.md::Send welcome pack",
+      "Projects/Client Onboarding/Client Onboarding.md::Schedule discovery call",
+      "Projects/Client Onboarding/Discovery questions.md::Draft question list for the call",
+      "Inbox.md::Renew passport",
+      "Meetings/Design review.md::Prepare wireframe walkthrough",
+      "Projects/Website Redesign.md::Get copy approval from marketing",
+      "Projects/Website Redesign.md::Compress hero images",
+      "Inbox.md::Look into a better note-taking template",
+      "Projects/Client Onboarding/Client Onboarding.md::Set up shared drive",
+      "Daily/2026-10-18.md::Read 20 pages"
+    ],
+    "in-progress": [
+      "Projects/Website Redesign.md::Fix broken contact form"
+    ],
+    "waiting": [
+      "Projects/Website Redesign.md::Hosting migration quote"
+    ],
+    "done": [
+      "Projects/Website Redesign.md::Fix broken contact form",
+      "Projects/Website Redesign.md::Kickoff meeting",
+      "Projects/Website Redesign.md::Collect brand assets",
+      "Daily/2026-10-08.md::Plan tomorrow",
+      "Daily/2026-10-09.md::Groceries",
+      "Daily/2026-10-12.md::Groceries",
+      "Daily/2026-10-13.md::Reply to emails",
+      "Daily/2026-10-14.md::Reply to emails",
+      "Daily/2026-10-16.md::Groceries",
+      "Daily/2026-10-17.md::Review PRs"
+    ]
+  },
+  "kanbanLanes": [
+    {
+      "id": "todo",
+      "name": "to do",
+      "kind": "status",
+      "status": "todo"
+    },
+    {
+      "id": "in-progress",
+      "name": "in progress",
+      "kind": "status",
+      "status": "in-progress"
+    },
+    {
+      "id": "waiting",
+      "name": "waiting / blocked",
+      "kind": "status",
+      "status": "waiting"
+    },
+    {
+      "id": "done",
+      "name": "done",
+      "kind": "status",
+      "status": "done"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "joejoes-second-brain",
+  "version": "0.1.0",
+  "description": "A full-page dashboard for your vault: tasks on a Kanban board, a calendar, projects, habit tracking with stats, and an A–Z library of your notes — all connected, all stored in plain Markdown.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "deploy": "node scripts/deploy.mjs",
+    "test": "esbuild test/index.ts --bundle --platform=node --outfile=test/.out/tests.cjs --log-level=warning --alias:obsidian=./test/obsidian-stub.ts && node test/.out/tests.cjs",
+    "preview": "node preview/build.mjs"
+  },
+  "keywords": [
+    "obsidian",
+    "dashboard",
+    "tasks",
+    "kanban"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.20.2",
+    "js-yaml": "^4.1.0",
+    "lucide": "^0.460.0",
+    "obsidian": "^1.5.7",
+    "tslib": "^2.6.2",
+    "typescript": "^5.4.5"
+  },
+  "author": "eieien"
+}

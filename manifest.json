@@ -1,0 +1,9 @@
+{
+  "id": "second-brain-dashboard",
+  "name": "joejoe's second brain",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.7",
+  "description": "A full-page dashboard for your vault: tasks on a Kanban board, a calendar, projects, habit tracking with stats, and an A–Z library of your notes — all connected, all stored in plain Markdown.",
+  "author": "eieien",
+  "isDesktopOnly": false
+}
