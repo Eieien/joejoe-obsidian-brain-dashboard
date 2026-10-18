@@ -44,7 +44,10 @@ export function calendarItems(
 		map.get(item.date)!.push(item);
 	};
 
+	const dailyByPath = new Map(notes.filter((n) => n.kind === "daily" && n.date).map((n) => [n.path, n.date!]));
 	for (const t of tasks) {
+		const noteDay = dailyByPath.get(t.path);
+		if (isOpen(t) && !t.due && !t.scheduled && noteDay) add({ date: noteDay, kind: "scheduled", title: t.text, path: t.path, line: t.line, task: t, priority: t.priority });
 		if (isOpen(t) && t.due) add({ date: t.due, kind: "due", title: t.text, path: t.path, line: t.line, task: t, priority: t.priority });
 		if (isOpen(t) && t.scheduled && t.scheduled !== t.due) add({ date: t.scheduled, kind: "scheduled", title: t.text, path: t.path, line: t.line, task: t, priority: t.priority });
 		if (t.status === "done" && t.doneDate) add({ date: t.doneDate, kind: "done", title: t.text, path: t.path, line: t.line, task: t });

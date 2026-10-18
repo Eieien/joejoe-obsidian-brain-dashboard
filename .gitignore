@@ -7,3 +7,4 @@ demo-vault/.obsidian/plugins/*/styles.css
 demo-vault/.obsidian/plugins/*/manifest.json
 demo-vault/.obsidian/workspace*.json
 preview/out/
+.claude/

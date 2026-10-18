@@ -1,6 +1,6 @@
 import { App, getIcon, Modal, setIcon, Setting, TFolder } from "obsidian";
 import type SecondBrainPlugin from "../main";
-import { HOME_SECTIONS, PILL_COLORS, type PillColor, type QuickLink } from "../settings";
+import { DARK_SURFACES, HOME_SECTIONS, PILL_COLORS, type DarkSurface, type PillColor, type QuickLink } from "../settings";
 import { IconPickerModal } from "./pickers";
 
 /** Edit the rotating quotes (one per line). */
@@ -156,6 +156,10 @@ export class HomeLayoutModal extends Modal {
 		new Setting(contentEl).setName("Look").setHeading();
 		new Setting(contentEl).setName("Style").addDropdown((d) => d.addOption("mono", "Mono page").addOption("theme", "Theme native")
 			.setValue(a.style).onChange((v) => { a.style = v as "mono" | "theme"; }));
+		new Setting(contentEl).setName("Dark mode surfaces").setDesc("Only affects dark mode.").addDropdown((d) => {
+			DARK_SURFACES.forEach((o) => d.addOption(o.value, o.label));
+			d.setValue(a.darkSurface ?? "default").onChange((v) => { a.darkSurface = v as DarkSurface; });
+		});
 
 		new Setting(contentEl).addButton((b) => b.setButtonText("Done").setCta().onClick(async () => {
 			await this.plugin.persist();

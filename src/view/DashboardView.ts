@@ -1,5 +1,6 @@
 import { ItemView, MarkdownRenderer, moment, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import type SecondBrainPlugin from "../main";
+import { styleClasses } from "../settings";
 import { CaptureModal } from "./CaptureModal";
 import { DayModal } from "./dayModal";
 import { DEFAULT_CAL_LAYERS, renderCalendarTab, type CalendarState } from "./calendarTab";
@@ -133,7 +134,8 @@ export class DashboardView extends ItemView {
 
 		this.clearIntervals();
 		root.empty();
-		root.toggleClass("sbd-style-mono", this.plugin.settings.appearance.style === "mono");
+		root.removeClass("sbd-style-mono", "sbd-dark-darker", "sbd-dark-plain", "sbd-dark-black");
+		root.addClass(...styleClasses(this.plugin.settings.appearance));
 		this.lastWidth = root.clientWidth;
 
 		const ctx: DashboardContext = {

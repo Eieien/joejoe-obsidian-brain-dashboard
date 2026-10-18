@@ -5,6 +5,14 @@ import type { DeadlineItem, NoteInfo, Priority, ProjectInfo, Task } from "../typ
 
 export const isOpen = (t: Task) => t.status !== "done" && t.status !== "cancelled";
 
+/**
+ * The day a task is planned for: its due date, else its scheduled date, else the day of
+ * the daily note it was written in (writing a task in today's note plans it for today).
+ */
+export function plannedDate(t: Task, noteDate: (path: string) => string | undefined): string | undefined {
+	return t.due ?? t.scheduled ?? noteDate(t.path);
+}
+
 export function daysUntil(date: string, today: string): number {
 	return Math.round((Date.parse(date) - Date.parse(today)) / 86_400_000);
 }

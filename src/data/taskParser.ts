@@ -70,6 +70,11 @@ function findDate(body: string, key: keyof typeof DATE_FIELDS): string | undefin
 		const m = body.match(new RegExp(`[\\[(]${f}::\\s*${DATE}[\\])]`, "i"));
 		if (m) return m[1];
 	}
+	// Kanban plugin cards: @{YYYY-MM-DD}
+	if (key === "due") {
+		const k = body.match(new RegExp(`@\\{${DATE}\\}`));
+		if (k) return k[1];
+	}
 	return undefined;
 }
 
@@ -118,6 +123,7 @@ export function cleanText(body: string): string {
 	let t = body;
 	t = t.replace(BLOCK_ID, "");
 	t = t.replace(INLINE_FIELD, "");
+	t = t.replace(/@@?\{[^}]*\}/g, "");
 	// Recurrence rule runs until the next signifier.
 	t = t.replace(/🔁[^📅📆🗓⏳⌛🛫✅➕❌🔺⏫🔼🔽⏬🆔⛔]*/gu, "");
 	for (const def of Object.values(DATE_FIELDS)) {
@@ -165,6 +171,7 @@ export function setPriority(line: string, p: Priority): string {
 export function setDue(line: string, date: string | null): string {
 	let out = line.replace(/\s*(?:📅|📆|🗓️|🗓)️?\s*\d{4}-\d{2}-\d{2}/gu, "");
 	out = out.replace(/\s*[\[(](?:due|deadline)::\s*\d{4}-\d{2}-\d{2}[\])]/gi, "");
+	out = out.replace(/\s*@\{\d{4}-\d{2}-\d{2}\}/g, "");
 	if (date) out = appendMeta(out, `📅 ${date}`);
 	return out.replace(/\s+$/, "");
 }

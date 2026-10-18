@@ -34,6 +34,12 @@ export class VaultIndex extends Events {
 		return this.tasks.filter((t) => t.project === key);
 	}
 
+	/** The date of the daily note at `path`, if it is one. */
+	noteDate(path: string): string | undefined {
+		const n = this.notes.get(path);
+		return n?.kind === "daily" ? n.date : undefined;
+	}
+
 	notesForProject(key: string): NoteInfo[] {
 		return [...this.notes.values()].filter((n) => n.project === key && n.kind !== "project");
 	}

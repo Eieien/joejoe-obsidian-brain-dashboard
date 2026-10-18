@@ -34,14 +34,16 @@ It doesn't ask you to reorganize anything. It reads the notes, tasks and frontma
 - **Notebook** (recently edited / due soon / check again), a **projects** column, and the **knowledge lab** (your areas, tags or folders).
 - **Customize page:** reorder or hide any section, and toggle widgets.
 
-### Tasks: a Kanban board that feels like the Kanban plugin
+### Tasks: your Kanban plugin board
 ![Tasks](docs/screenshots/tasks.png)
-- Lanes for **to do · in progress · waiting · done**, plus your own sections via **+ Add section**. A custom section is backed by a label: drop a card into *Review* and it gets `#review`.
-- Smooth pointer drag and drop: the card floats under your cursor, a gap opens where it will land, and other cards slide aside. You can reorder within a lane (the order is saved). On touch screens, press and hold to drag.
-- **+ Add a card** in every lane. Rename, move, hide or delete lanes from their ⋯ menu.
-- A **List** view with grouping (due date, status, priority, project) and sorting (urgency, due date, priority, recently edited).
-- Filters for project, due date, priority and label.
-- **Priorities** P1–P4, colored **labels** (pick from a list or create new ones), and automatic *urgent* flagging for tasks due soon.
+- The **Board** view shows one board file in the [Kanban plugin's](https://github.com/mgmeyers/obsidian-kanban) format. Pick an existing board or create one, and the same file still opens in the Kanban plugin. Only that board's cards appear, never tasks scattered through your other notes.
+- Everything you do edits the board file in the Kanban plugin's own format:
+  - drag cards between lists, or reorder them within a list (a floating card and a drop gap show where it lands; on touch screens, press and hold)
+  - tick cards complete, or drop them into a list marked **Complete**
+  - add cards with **+ Add a card**, and double-click a card to edit it
+  - set dates (`@{2026-10-20}`), move cards between lists, or delete them from the ⋯ menu
+  - add, rename, move and delete lists
+- The **List** view still shows tasks found across your notes, with filters (project, due date, priority, label), grouping and sorting.
 
 ### Calendar and day planner
 ![Calendar day popup](docs/screenshots/calendar.png)
@@ -115,7 +117,8 @@ npm run deploy -- "/path/to/YourVault"
    - **Projects:** a folder (default `Projects/`), a tag (default `#project`), or a frontmatter field (default `type: project`).
    - **Daily notes:** uses the core Daily Notes plugin's folder and format when that plugin is on; otherwise set them here. Habit ticks are saved in daily notes, so this matters.
    - **Excluded folders:** templates, attachments, Excalidraw drawings and so on.
-3. Add a few habits in **Trackers → Manage habits**, and hover the top of Home to set an icon and a cover.
+3. Open **Tasks** and pick (or create) the Kanban board to use.
+4. Add a few habits in **Trackers → Manage habits**, and hover the top of Home to set an icon and a cover.
 
 To see everything filled in first, open the bundled `demo-vault/` folder as a vault (it has projects, six weeks of habit data, books, meetings and tasks in every supported syntax).
 
@@ -194,7 +197,7 @@ You never have to type these yourself; ticking a box on the dashboard writes the
 | Section | What you can set |
 |---|---|
 | General | Open the dashboard on startup, default task view, week start, excluded folders |
-| Appearance | Style (mono or theme native), page title, icon, cover image, quotes, which widgets show, countdown target |
+| Appearance | Style (mono or theme native), dark mode surfaces (theme default, darker, plain or black), page title, icon, cover image, quotes, which widgets show, countdown target |
 | Quick links | Label, icon, color and target for each link (or leave empty to use your top-level folders) |
 | Projects | Project folder, tag and frontmatter field |
 | Daily notes & capture | Use the core Daily Notes settings, daily folder and date format, inbox file, where quick capture saves |
@@ -226,7 +229,7 @@ Requires Node 18+.
 npm install
 npm run dev        # rebuild on change (pair with the Hot Reload plugin)
 npm run build      # type-check + production bundle → main.js
-npm test           # unit tests for parsing, stats, calendar logic
+npm test           # unit tests for task parsing, board files, stats, calendar logic
 npm run deploy -- "/path/to/YourVault"   # copy main.js, manifest.json, styles.css into the vault
 ```
 
@@ -262,6 +265,7 @@ src/
     taskWriter.ts      write task changes back safely
     queries.ts         urgency, sorting, deadlines, project stats
     calendar.ts        calendar items and month grids
+    kanbanBoard.ts     read/edit Kanban plugin board files (pure, tested)
     trackerTypes.ts    tracker definitions and statistics (pure, tested)
     trackerStore.ts    read and write tracker entries and habit checks
     daily.ts           daily-note config, create, append
@@ -281,7 +285,7 @@ demo-vault/            sample vault
 
 ## Roadmap
 
-- [x] Core dashboard, tasks (Kanban/list), priorities and labels, projects, quick capture
+- [x] Core dashboard, Kanban plugin board + task list, priorities and labels, projects, quick capture
 - [x] Calendar (month/week/timeline) and the day popup
 - [x] Habits with statistics, other trackers, the A–Z library
 - [ ] Inbox triage and Zettelkasten tools (fleeting → literature → permanent notes, orphans, resurfacing)

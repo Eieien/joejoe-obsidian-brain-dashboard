@@ -1,8 +1,9 @@
 import { App, Modal, moment, setIcon, type EventRef } from "obsidian";
 import { calendarItems, monthGrid, type CalItem, type CalKind } from "../data/calendar";
 import { appendToFile, getDailyConfig, getOrCreateDaily } from "../data/daily";
-import { isOpen } from "../data/queries";
+import { isOpen, plannedDate } from "../data/queries";
 import { buildTaskLine } from "../data/taskParser";
+import { styleClasses } from "../settings";
 import { addDays } from "../data/trackerTypes";
 import { CaptureModal } from "./CaptureModal";
 import { emptyState, renderTask, type DashboardContext } from "./components";
@@ -42,8 +43,9 @@ export class DayModal extends Modal {
 
 	onOpen(): void {
 		this.modalEl.addClass("sbd-day-modal");
-		this.contentEl.addClass("sbd-modal-root");
-		if (this.ctx.plugin.settings.appearance.style === "mono") this.contentEl.addClass("sbd-style-mono");
+		this.contentEl.addClass("sbd-modal-root", ...styleClasses(this.ctx.plugin.settings.appearance));
+		const dark = this.ctx.plugin.settings.appearance.darkSurface;
+		if (dark && dark !== "default") this.modalEl.addClass(`sbd-dark-${dark}`);
 		this.ref = this.ctx.plugin.index.on("updated", () => this.render());
 		this.render();
 	}
@@ -196,8 +198,9 @@ export class DayModal extends Modal {
 	private renderTodos(el: HTMLElement): void {
 		const head = el.createDiv({ cls: "sbd-dm-head" });
 		head.createDiv({ cls: "sbd-dm-title", text: "todo list" });
-		const tasks = this.ctx.plugin.index.tasks.filter((t) =>
-			(isOpen(t) && (t.due === this.date || t.scheduled === this.date || (this.date === this.ctx.today && !!t.due && t.due < this.date))) ||
+		const idx = this.ctx.plugin.index;
+		const tasks = idx.tasks.filter((t) =>
+			(isOpen(t) && (plannedDate(t, (p) => idx.noteDate(p)) === this.date || t.scheduled === this.date || (this.date === this.ctx.today && !!t.due && t.due < this.date))) ||
 			(t.status === "done" && t.doneDate === this.date));
 		tasks.sort((a, b) => Number(!isOpen(a)) - Number(!isOpen(b)) || a.priority - b.priority);
 		const quick = el.createDiv({ cls: "sbd-quick" });

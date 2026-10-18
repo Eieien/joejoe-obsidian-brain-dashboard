@@ -71,6 +71,12 @@ t("buildTaskLine roundtrip", () => {
 	assert.equal(p.due, "2026-10-19");
 	assert.deepEqual(p.links, ["Launch"]);
 });
+t("kanban plugin @{date} is a due date", () => {
+	const p = parseTaskLine("- [ ] Draft newsletter #writing @{2026-10-21} @@{09:30}")!;
+	assert.equal(p.due, "2026-10-21");
+	assert.equal(p.text, "Draft newsletter");
+	assert.equal(setDue("- [ ] a @{2026-10-21}", "2026-10-25"), "- [ ] a 📅 2026-10-25");
+});
 t("cleanText md links", () => assert.equal(cleanText("Read [docs](https://x.y) now"), "Read docs now"));
 
 const mk = (o: Partial<Task>): Task => ({ id: "a", path: "a.md", line: 0, raw: "", text: "", status: "todo", statusChar: " ", priority: 3, labels: [], links: [], fileMtime: 0, ...o });

@@ -72,11 +72,10 @@ export default class SecondBrainPlugin extends Plugin {
 			trackers: data?.trackers ?? d.trackers,
 			quickLinks: data?.quickLinks ?? d.quickLinks,
 			habits: data?.habits ?? d.habits,
-			taskOrder: data?.taskOrder ?? {},
-			kanbanLanes: data?.kanbanLanes ?? d.kanbanLanes,
+			kanbanBoard: data?.kanbanBoard ?? "",
 			projectDescriptions: data?.projectDescriptions ?? {},
 		};
-		delete (s as { pomodoro?: unknown }).pomodoro;
+		for (const k of ["pomodoro", "taskOrder", "kanbanLanes"]) delete (s as unknown as Record<string, unknown>)[k];
 		delete (s.appearance as { showPomodoro?: unknown }).showPomodoro;
 
 		// Earlier versions kept habits as a "daily" tracker; move its yes/no fields into habits.

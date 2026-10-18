@@ -1129,3 +1129,67 @@ body.sbd-is-dragging, body.sbd-is-dragging * { cursor: grabbing !important; user
 	.sbd-cap-row { grid-template-columns: 1fr; gap: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { .modal.sbd-capture3 { animation: none !important; } }
+
+/* ---------- Board (Kanban plugin file) ---------- */
+.sbd-board-select { max-width: 280px; }
+.sbd-board-open { margin-left: auto; }
+.sbd-board-setup { max-width: 560px; display: flex; flex-direction: column; gap: 10px; padding: 24px; border: 1px solid var(--sbd-border); border-radius: 12px; background: var(--sbd-card); }
+.sbd-board-setup-title { font-family: var(--sbd-display); font-size: 1.25em; font-weight: 700; }
+.sbd-board-setup button.mod-cta { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; }
+.sbd-board-list { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.sbd-board-choice { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; background: var(--sbd-surface); border: 1px solid var(--sbd-border); }
+.sbd-board-choice:hover { border-color: var(--sbd-ink-3); }
+.sbd-board-choice .sbd-icon { color: var(--sbd-ink-2); }
+.sbd-card-edit { width: 100%; min-height: 56px; resize: vertical; font-family: var(--sbd-font); font-size: var(--font-ui-small); border-radius: 6px; box-sizing: border-box; }
+.sbd-kcard .sbd-task-text { cursor: grab; }
+
+/* ---------- Things to do: today / tomorrow ---------- */
+.sbd-quick-day button { height: 24px !important; padding: 0 8px !important; font-size: 11px !important; }
+.sbd-todo-group { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 4px; padding-bottom: 4px; border-bottom: 1px solid var(--sbd-border); }
+.sbd-todo-group-title { font-weight: 700; font-size: var(--font-ui-small); }
+.sbd-todo-group .sbd-count { margin-left: auto; }
+
+/* ---------- New project ---------- */
+.sbd-project-new {
+	align-items: center; justify-content: center; text-align: center; gap: 8px; min-height: 120px;
+	background: transparent !important; border: 1px dashed var(--sbd-border); color: var(--sbd-ink-2);
+}
+.sbd-project-new:hover { border-color: var(--sbd-ink-3); color: var(--sbd-ink); }
+.sbd-project-new .sbd-icon svg { width: 20px; height: 20px; }
+.sbd-project-new .sbd-muted { max-width: 260px; }
+
+/* ---------- Dark mode surfaces (setting: Appearance → Dark mode surfaces) ---------- */
+.theme-dark .sbd-dark-darker {
+	--sbd-surface: color-mix(in srgb, var(--background-primary) 55%, #000);
+	--sbd-card: color-mix(in srgb, var(--text-normal) 4%, var(--sbd-surface));
+	--sbd-card-hover: color-mix(in srgb, var(--text-normal) 8%, var(--sbd-surface));
+}
+.theme-dark .sbd-dark-plain {
+	--sbd-card: var(--sbd-surface);
+	--sbd-card-hover: color-mix(in srgb, var(--text-normal) 5%, var(--sbd-surface));
+}
+.theme-dark .sbd-dark-black {
+	--sbd-surface: #000;
+	--sbd-card: #000;
+	--sbd-card-hover: #121212;
+	--sbd-border: #262626;
+}
+/* Plain and Black: outline the panels that used grey fills. */
+.theme-dark :is(.sbd-dark-plain, .sbd-dark-black) :is(
+	.sbd-card, .sbd-proj-card, .sbd-lab-card, .sbd-lane, .sbd-tracker-card, .sbd-project-card,
+	.sbd-quote, .sbd-habit-pill, .sbd-note-card, .sbd-board-setup
+) { border: 1px solid var(--sbd-border); }
+/* Stat tiles keep their colored left edge. */
+.theme-dark :is(.sbd-dark-plain, .sbd-dark-black) :is(.sbd-stat, .sbd-hub-stat) {
+	border-top: 1px solid var(--sbd-border); border-right: 1px solid var(--sbd-border); border-bottom: 1px solid var(--sbd-border);
+}
+.theme-dark :is(.sbd-dark-plain, .sbd-dark-black) .sbd-hub-stat:not(.is-overdue):not(.is-urgent) { border-left: 1px solid var(--sbd-border); }
+.theme-dark :is(.sbd-dark-plain, .sbd-dark-black) .sbd-habit-summary-col .sbd-section-body { border: 1px solid var(--sbd-border); }
+.theme-dark :is(.sbd-dark-plain, .sbd-dark-black) :is(.sbd-segmented, .sbd-count, .sbd-dm-dow, .sbd-dm-day, .sbd-dm-chip, .sbd-cap-seg) {
+	background: var(--sbd-card-hover) !important;
+}
+.theme-dark :is(.sbd-dark-plain, .sbd-dark-black) .sbd-dm-day.is-selected { background: var(--sbd-ink) !important; }
+/* Popup frames follow the same surface. */
+.theme-dark .modal.sbd-dark-darker { background: color-mix(in srgb, var(--background-primary) 55%, #000); }
+.theme-dark .modal.sbd-dark-black { background: #000; border-color: #262626; }
+.theme-dark .modal.sbd-dark-plain { background: var(--background-primary); }

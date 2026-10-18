@@ -1,4 +1,6 @@
-import { moment, setIcon } from "obsidian";
+import { App, Modal, moment, normalizePath, Notice, setIcon, Setting } from "obsidian";
+import type SecondBrainPlugin from "../main";
+import { ensureFolder } from "../data/daily";
 import { daysUntil, isClosedStatus, isOpen, projectStats, sortTasks, startOfWeek } from "../data/queries";
 import { STATUS_LABELS, type ProjectInfo } from "../types";
 import { CaptureModal } from "./CaptureModal";
@@ -25,16 +27,16 @@ function renderProjectGrid(el: HTMLElement, ctx: DashboardContext, st: ProjectsS
 		const b = seg.createEl("button", { text: v === "active" ? "Active" : "All", cls: st.show === v ? "is-active" : "" });
 		b.onclick = () => update({ show: v });
 	});
+	const newProject = () => new NewProjectModal(ctx.app, ctx.plugin, (path) => update({ selected: path })).open();
+	const add = toolbar.createEl("button", { cls: "mod-cta sbd-add" });
+	setIcon(add.createSpan({ cls: "sbd-icon" }), "plus");
+	add.createSpan({ text: "New project" });
+	add.onclick = newProject;
 
 	const projects = [...index.projects.values()]
 		.filter((p) => st.show === "all" || !isClosedStatus(p.status))
 		.map((p) => ({ p, s: projectStats(index.tasksForProject(p.key), ctx.today, settings) }))
 		.sort((a, b) => b.s.urgent - a.s.urgent || b.s.overdue - a.s.overdue || a.p.name.localeCompare(b.p.name));
-
-	if (!projects.length) {
-		emptyState(el, `No projects yet. Notes in "${settings.projectFolder}/", tagged #${settings.projectTag}, or with "${settings.projectTypeField}: ${settings.projectTypeValue}" show up here.`);
-		return;
-	}
 
 	const grid = el.createDiv({ cls: "sbd-project-grid" });
 	for (const { p, s } of projects) {
@@ -57,6 +59,92 @@ function renderProjectGrid(el: HTMLElement, ctx: DashboardContext, st: ProjectsS
 		if (s.nextDue) { foot.createSpan({ cls: "sbd-muted", text: "Next due " }); dueChip(foot, s.nextDue, ctx.today); }
 		if (p.deadline) { foot.createSpan({ cls: "sbd-muted", text: " · Deadline " }); dueChip(foot, p.deadline, ctx.today); }
 	}
+
+	// Always offer a new project at the end of the grid.
+	const addCard = grid.createDiv({ cls: "sbd-project-card sbd-project-new", attr: { role: "button", "aria-label": "New project" } });
+	setIcon(addCard.createSpan({ cls: "sbd-icon" }), "folder-plus");
+	addCard.createSpan({ text: "New project" });
+	if (!projects.length) {
+		addCard.createDiv({
+			cls: "sbd-muted",
+			text: `Or mark existing notes: put them in "${settings.projectFolder}/", tag them #${settings.projectTag}, or add "${settings.projectTypeField}: ${settings.projectTypeValue}".`,
+		});
+	}
+	addCard.onclick = newProject;
+}
+
+/** Create a project note (frontmatter + a Tasks heading) and open its page. */
+class NewProjectModal extends Modal {
+	private name = "";
+	private status = "active";
+	private area = "";
+	private deadline = "";
+	private description = "";
+	private folder: string;
+
+	constructor(app: App, private plugin: SecondBrainPlugin, private onCreated: (path: string) => void) {
+		super(app);
+		this.folder = plugin.settings.projectFolder || "Projects";
+	}
+
+	onOpen(): void {
+		this.setTitle("New project");
+		this.modalEl.addClass("sbd-project-modal");
+		const { contentEl } = this;
+		const areas = [...new Set([...this.plugin.index.projects.values()].map((p) => p.area).filter((a): a is string => !!a))].sort();
+
+		new Setting(contentEl).setName("Name").addText((t) => {
+			t.setPlaceholder("e.g. Website redesign").onChange((v) => { this.name = v; });
+			t.inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) void this.create(); });
+			window.setTimeout(() => t.inputEl.focus(), 0);
+		});
+		new Setting(contentEl).setName("Status").addDropdown((d) => d
+			.addOption("active", "Active").addOption("planning", "Planning").addOption("on hold", "On hold")
+			.setValue(this.status).onChange((v) => { this.status = v; }));
+		new Setting(contentEl).setName("Area").setDesc(areas.length ? `Existing: ${areas.join(", ")}` : "Optional, e.g. Work, Personal, School.")
+			.addText((t) => {
+				t.setPlaceholder("Work").onChange((v) => { this.area = v.trim(); });
+				const list = contentEl.createEl("datalist", { attr: { id: "sbd-area-options" } });
+				for (const a of areas) list.createEl("option", { value: a });
+				t.inputEl.setAttr("list", "sbd-area-options");
+			});
+		new Setting(contentEl).setName("Deadline").setDesc("Optional.")
+			.addText((t) => { t.inputEl.type = "date"; t.onChange((v) => { this.deadline = v; }); });
+		new Setting(contentEl).setName("Folder").setDesc("Where the project note is created.")
+			.addText((t) => t.setValue(this.folder).onChange((v) => { this.folder = v.trim().replace(/^\/|\/$/g, ""); }));
+		new Setting(contentEl).setName("Description").setDesc("Optional. Shown on the project page; Markdown works.")
+			.addTextArea((t) => { t.inputEl.rows = 4; t.inputEl.addClass("sbd-wide-textarea"); t.onChange((v) => { this.description = v; }); });
+		new Setting(contentEl).addButton((b) => b.setButtonText("Create project").setCta().onClick(() => void this.create()));
+	}
+
+	private async create(): Promise<void> {
+		const name = this.name.trim();
+		if (!name) { new Notice("Give the project a name."); return; }
+		const safe = name.replace(/[\\/:*?"<>|#^[\]]/g, "-");
+		const dir = this.folder ? `${this.folder}/` : "";
+		let path = normalizePath(`${dir}${safe}.md`);
+		for (let i = 2; this.app.vault.getAbstractFileByPath(path); i++) path = normalizePath(`${dir}${safe} ${i}.md`);
+		try {
+			await ensureFolder(this.app, path);
+			const file = await this.app.vault.create(path, `# ${name}\n\n## Tasks\n\n`);
+			const s = this.plugin.settings;
+			await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+				fm[s.projectTypeField || "type"] = s.projectTypeValue || "project";
+				fm.status = this.status;
+				if (this.area) fm.area = this.area;
+				if (this.deadline) fm.deadline = this.deadline;
+				if (this.description.trim()) fm.description = this.description.trim();
+			});
+			new Notice(`Project created: ${path.replace(/\.md$/, "")}`);
+			this.close();
+			this.onCreated(path);
+		} catch (e) {
+			console.error(e);
+			new Notice("Second brain: couldn't create the project — see the developer console.");
+		}
+	}
+
+	onClose(): void { this.contentEl.empty(); }
 }
 
 /** Everything connected to one project: description, tasks, deadlines, notes, activity. */

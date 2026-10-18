@@ -2,7 +2,7 @@ import { moment, setIcon } from "obsidian";
 import { appendToFile, dailyDate, getDailyConfig, getOrCreateDaily } from "../data/daily";
 import { deadlines, isClosedStatus, isDueToday, isOpen, isOverdue, isUrgent, projectStats, sortTasks, startOfWeek } from "../data/queries";
 import { buildTaskLine } from "../data/taskParser";
-import type { NoteInfo } from "../types";
+import type { NoteInfo, Task } from "../types";
 import { CaptureModal } from "./CaptureModal";
 import { dueChip, emptyState, pill, priorityBadge, renderTask, section, whenLoaded, type DashboardContext } from "./components";
 import { renderHabitToday, renderHabitWeek } from "./habits";
@@ -16,9 +16,11 @@ export interface HomeState {
 	projects: "active" | "all";
 	lab: "areas" | "tags" | "folders";
 	habits: "today" | "week";
+	/** Which day the Home quick add dates new tasks for. */
+	quickDay: "today" | "tomorrow";
 }
 
-export const defaultHome = (): HomeState => ({ notebook: "recent", notebookLimit: 10, projects: "active", lab: "areas", habits: "today" });
+export const defaultHome = (): HomeState => ({ notebook: "recent", notebookLimit: 10, projects: "active", lab: "areas", habits: "today", quickDay: "today" });
 
 export function renderHomeTab(el: HTMLElement, ctx: DashboardContext, st: HomeState, update: (p: Partial<HomeState>) => void, goToTasks: (patch: Partial<TaskFilters>) => void): void {
 	pageHeader(el, ctx);
@@ -27,7 +29,7 @@ export function renderHomeTab(el: HTMLElement, ctx: DashboardContext, st: HomeSt
 		if (item.hidden) continue;
 		switch (item.id) {
 			case "quicklinks": quickLinks(page, ctx); break;
-			case "todo": renderTodo(page, ctx, goToTasks); break;
+			case "todo": renderTodo(page, ctx, st, update, goToTasks); break;
 			case "habits": renderHabitsSection(page, ctx, st, update); break;
 			case "widgets": renderWidgets(page, ctx); break;
 			case "notebook": renderNotebookSplit(page, ctx, st, update); break;
@@ -37,7 +39,7 @@ export function renderHomeTab(el: HTMLElement, ctx: DashboardContext, st: HomeSt
 }
 
 /** Stats + quick add + things to do (urgent / due first), with upcoming deadlines beside it. */
-function renderTodo(page: HTMLElement, ctx: DashboardContext, goToTasks: (patch: Partial<TaskFilters>) => void): void {
+function renderTodo(page: HTMLElement, ctx: DashboardContext, st: HomeState, update: (p: Partial<HomeState>) => void, goToTasks: (patch: Partial<TaskFilters>) => void): void {
 	const { index, settings } = ctx.plugin;
 	const tasks = index.tasks;
 	const open = tasks.filter(isOpen);
@@ -61,26 +63,68 @@ function renderTodo(page: HTMLElement, ctx: DashboardContext, goToTasks: (patch:
 	}
 
 	const split = page.createDiv({ cls: "sbd-split" });
-	const focus = sortTasks(open.filter((t) => isUrgent(t, today, settings) || isDueToday(t, today) || t.status === "in-progress" || t.labels.includes("needs-to-be-done")), "smart", today, settings);
+	// Today: overdue, due/scheduled today, written in today's daily note, plus urgent and in-progress.
+	// Tomorrow: due/scheduled tomorrow or written in tomorrow's daily note.
+	const tomorrow = moment(today).add(1, "day").format("YYYY-MM-DD");
+	const explicit = (t: Task) => t.due ?? t.scheduled;
+	const inToday = (t: Task) => {
+		// A date always wins: due/scheduled today or earlier, or written in today's note.
+		const d = explicit(t);
+		if (d) return d <= today;
+		const noteDay = index.noteDate(t.path);
+		if (noteDay === today) return true;
+		if (noteDay && noteDay > today) return false;
+		// Undated (or from an older note): bring it in only if it's flagged as pressing.
+		return t.priority === 1 || t.labels.includes("urgent") || t.labels.includes("needs-to-be-done") || t.status === "in-progress";
+	};
+	const inTomorrow = (t: Task) => {
+		const d = explicit(t);
+		return d ? d === tomorrow : index.noteDate(t.path) === tomorrow;
+	};
+	const todayList = sortTasks(open.filter(inToday), "smart", today, settings);
+	const tomorrowList = sortTasks(open.filter((t) => !inToday(t) && inTomorrow(t)), "smart", today, settings);
+
 	const fb = section(split, { title: "things to do", icon: "list-checks", action: { label: "All tasks", icon: "arrow-right", onClick: () => goToTasks({ due: "urgent" }) } });
 
+	// Quick add, dated for today or tomorrow.
 	const quick = fb.createDiv({ cls: "sbd-quick" });
 	setIcon(quick.createSpan({ cls: "sbd-icon" }), "plus");
-	const qInput = quick.createEl("input", { type: "text", cls: "sbd-quick-input", attr: { placeholder: "add a task… (enter to save)", "data-sbd-focus": "quick-add" } });
+	const qInput = quick.createEl("input", { type: "text", cls: "sbd-quick-input", attr: { placeholder: `add a task for ${st.quickDay}… (enter to save)`, "data-sbd-focus": "quick-add" } });
+	const daySeg = quick.createDiv({ cls: "sbd-segmented sbd-quick-day" });
+	(["today", "tomorrow"] as const).forEach((d) => {
+		const b = daySeg.createEl("button", { text: d, cls: st.quickDay === d ? "is-active" : "" });
+		b.onclick = () => update({ quickDay: d });
+	});
+	let busy = false;
 	qInput.onkeydown = async (e) => {
-		if (e.key !== "Enter" || !qInput.value.trim()) return;
-		const line = buildTaskLine({ text: qInput.value.trim(), priority: 3, labels: [] });
-		const path = settings.captureTarget === "inbox" ? settings.inboxFile : (await getOrCreateDaily(ctx.app, getDailyConfig(ctx.app, settings))).path;
+		if (e.key !== "Enter" || e.isComposing || busy || !qInput.value.trim()) return;
+		busy = true;
+		const text = qInput.value.trim();
 		qInput.value = "";
-		await appendToFile(ctx.app, path, line);
+		try {
+			const date = st.quickDay === "today" ? today : tomorrow;
+			const line = buildTaskLine({ text, priority: 3, labels: [], due: date });
+			const path = settings.captureTarget === "inbox" ? settings.inboxFile : (await getOrCreateDaily(ctx.app, getDailyConfig(ctx.app, settings), moment(date))).path;
+			await appendToFile(ctx.app, path, line);
+		} finally {
+			busy = false;
+		}
 	};
 	const more = quick.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { "aria-label": "Add with priority, labels, due date…" } });
 	setIcon(more, "sliders-horizontal");
-	more.onclick = () => new CaptureModal(ctx.app, ctx.plugin).open();
+	more.onclick = () => new CaptureModal(ctx.app, ctx.plugin, { due: st.quickDay === "today" ? today : tomorrow }).open();
 
-	if (!focus.length) emptyState(fb, "Nothing urgent or due. Pick something from your projects.");
-	for (const t of focus.slice(0, 8)) renderTask(fb, t, ctx);
-	if (focus.length > 8) fb.createDiv({ cls: "sbd-load-more", text: `+ ${focus.length - 8} more` }).onclick = () => goToTasks({ due: "urgent" });
+	const group = (title: string, date: string, list: Task[], empty: string) => {
+		const head = fb.createDiv({ cls: "sbd-todo-group" });
+		head.createSpan({ cls: "sbd-todo-group-title", text: title });
+		head.createSpan({ cls: "sbd-muted", text: moment(date).format("ddd, MMM D") });
+		head.createSpan({ cls: "sbd-count", text: String(list.length) });
+		if (!list.length) { fb.createDiv({ cls: "sbd-empty", text: empty }); return; }
+		for (const t of list.slice(0, 10)) renderTask(fb, t, ctx);
+		if (list.length > 10) fb.createDiv({ cls: "sbd-load-more", text: `+ ${list.length - 10} more` }).onclick = () => ctx.openCalendarDay(date);
+	};
+	group("today", today, todayList, "Nothing planned for today. Add a task above, or write one in today's daily note.");
+	group("tomorrow", tomorrow, tomorrowList, "Nothing planned for tomorrow yet.");
 
 	const side = section(split, { title: "upcoming", icon: "calendar-clock", cls: "sbd-side-col" });
 	const dl = deadlines(tasks, [...index.projects.values()], notes, today, settings.deadlineWindowDays).filter((d) => d.date >= today);

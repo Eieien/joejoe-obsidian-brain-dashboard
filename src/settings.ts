@@ -40,24 +40,6 @@ export interface HomeImage {
 	pixelated: boolean;
 }
 
-/** A Kanban lane: one of the built-in statuses, or a custom section backed by a label. */
-export interface KanbanLane {
-	id: string;
-	name: string;
-	kind: "status" | "label";
-	status?: TaskStatus;
-	/** For label lanes: open tasks with #label show here. */
-	label?: string;
-	hidden?: boolean;
-}
-
-export const DEFAULT_LANES: KanbanLane[] = [
-	{ id: "todo", name: "to do", kind: "status", status: "todo" },
-	{ id: "in-progress", name: "in progress", kind: "status", status: "in-progress" },
-	{ id: "waiting", name: "waiting / blocked", kind: "status", status: "waiting" },
-	{ id: "done", name: "done", kind: "status", status: "done" },
-];
-
 export interface HabitDef {
 	/** Frontmatter key in daily notes (e.g. gym → `gym: true`). */
 	key: string;
@@ -65,6 +47,23 @@ export interface HabitDef {
 	icon: string;
 	/** Target days per week. */
 	target: number;
+}
+
+export type DarkSurface = "default" | "darker" | "plain" | "black";
+
+export const DARK_SURFACES: { value: DarkSurface; label: string }[] = [
+	{ value: "default", label: "Theme default" },
+	{ value: "darker", label: "Darker" },
+	{ value: "plain", label: "Plain (cards match the background)" },
+	{ value: "black", label: "Black" },
+];
+
+/** CSS classes for the dashboard root and its popups, from the appearance settings. */
+export function styleClasses(a: AppearanceSettings): string[] {
+	const out: string[] = [];
+	if (a.style === "mono") out.push("sbd-style-mono");
+	if (a.darkSurface && a.darkSurface !== "default") out.push(`sbd-dark-${a.darkSurface}`);
+	return out;
 }
 
 export interface AppearanceSettings {
@@ -76,6 +75,8 @@ export interface AppearanceSettings {
 	/** Vertical focus of the cover image, 0–100 (%). */
 	bannerPosition: number;
 	style: "mono" | "theme";
+	/** How grey surfaces look in dark mode. */
+	darkSurface: DarkSurface;
 	quotes: string[];
 	showQuote: boolean;
 	showCountdown: boolean;
@@ -114,9 +115,8 @@ export interface DashboardSettings {
 	quickLinks: QuickLink[];
 	habits: HabitDef[];
 	trackers: TrackerDef[];
-	/** Manual Kanban order per lane id: task keys (path::text) in display order. */
-	taskOrder: Record<string, string[]>;
-	kanbanLanes: KanbanLane[];
+	/** Kanban plugin board file shown on the Tasks page. */
+	kanbanBoard: string;
 	/** Descriptions for folder-only projects (projects with a note store it in frontmatter). */
 	projectDescriptions: Record<string, string>;
 }
@@ -159,6 +159,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
 		banner: "",
 		bannerPosition: 50,
 		style: "mono",
+		darkSurface: "default",
 		quotes: [
 			"Discipline will take you places where motivation can't.",
 			"Your mind is for having ideas, not holding them.",
@@ -181,8 +182,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
 		{ key: "journal", label: "Journal", icon: "notebook-pen", target: 7 },
 	],
 	trackers: DEFAULT_TRACKERS,
-	taskOrder: {},
-	kanbanLanes: DEFAULT_LANES,
+	kanbanBoard: "",
 	projectDescriptions: {},
 };
 
@@ -334,6 +334,13 @@ export class DashboardSettingTab extends PluginSettingTab {
 			.setDesc("Mono: monospace, Notion-like page. Theme: follows your theme's fonts.")
 			.addDropdown((d) => d.addOption("mono", "Mono page").addOption("theme", "Theme native")
 				.setValue(a.style).onChange(async (v) => { a.style = v as "mono" | "theme"; await save(); }));
+		new Setting(containerEl)
+			.setName("Dark mode surfaces")
+			.setDesc("How the grey cards and panels look in dark mode. Plain and Black use outlines instead of grey fills, like light mode.")
+			.addDropdown((d) => {
+				DARK_SURFACES.forEach((o) => d.addOption(o.value, o.label));
+				d.setValue(a.darkSurface ?? "default").onChange(async (v) => { a.darkSurface = v as DarkSurface; await save(); });
+			});
 		new Setting(containerEl)
 			.setName("Page title")
 			.addText((t) => t.setValue(a.title).onChange(async (v) => { a.title = v; await save(); }));

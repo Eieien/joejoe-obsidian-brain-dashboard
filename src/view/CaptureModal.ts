@@ -1,5 +1,6 @@
 import { App, Modal, moment, Notice, setIcon } from "obsidian";
 import type SecondBrainPlugin from "../main";
+import { styleClasses } from "../settings";
 import { appendToFile, getDailyConfig, getOrCreateDaily } from "../data/daily";
 import { buildTaskLine } from "../data/taskParser";
 import { slugKey } from "../data/trackerTypes";
@@ -42,8 +43,9 @@ export class CaptureModal extends Modal {
 	onOpen(): void {
 		this.modalEl.addClass("sbd-capture3");
 		const root = this.contentEl;
-		root.addClass("sbd-modal-root");
-		if (this.plugin.settings.appearance.style === "mono") root.addClass("sbd-style-mono");
+		root.addClass("sbd-modal-root", ...styleClasses(this.plugin.settings.appearance));
+		const dark = this.plugin.settings.appearance.darkSurface;
+		if (dark && dark !== "default") this.modalEl.addClass(`sbd-dark-${dark}`);
 
 		const input = root.createEl("textarea", { cls: "sbd-cap-title", attr: { placeholder: "What needs doing?", rows: "1", "aria-label": "Title" } });
 		const grow = () => { input.style.height = "auto"; input.style.height = `${input.scrollHeight}px`; };

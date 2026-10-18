@@ -2,7 +2,7 @@ import { setIcon } from "obsidian";
 import { DUE_BUCKET_ORDER, daysUntil, dueBucket, isDueToday, isOpen, isOverdue, isUrgent, sortTasks } from "../data/queries";
 import { PRIORITY_LABELS, STATUS_LABELS, type Priority, type Task, type TaskStatus } from "../types";
 import { CaptureModal } from "./CaptureModal";
-import { renderKanban } from "./kanban";
+import { renderBoardView } from "./kanban";
 import { emptyState, renderTask, statusIcon, type DashboardContext } from "./components";
 
 export interface TaskFilters {
@@ -50,11 +50,15 @@ export function renderTasksTab(el: HTMLElement, ctx: DashboardContext, f: TaskFi
 	// View toggle
 	const seg = toolbar.createDiv({ cls: "sbd-segmented" });
 	(["kanban", "list"] as const).forEach((v) => {
-		const b = seg.createEl("button", { cls: f.view === v ? "is-active" : "" });
-		setIcon(b.createSpan({ cls: "sbd-icon" }), v === "kanban" ? "columns-3" : "list");
-		b.createSpan({ text: v === "kanban" ? "Kanban" : "List" });
+		const b = seg.createEl("button", { cls: f.view === v ? "is-active" : "", attr: { "aria-label": v === "kanban" ? "Your Kanban plugin board" : "Tasks found in your notes" } });
+		setIcon(b.createSpan({ cls: "sbd-icon" }), v === "kanban" ? "square-kanban" : "list");
+		b.createSpan({ text: v === "kanban" ? "Board" : "List" });
 		b.onclick = () => update({ view: v });
 	});
+	if (f.view === "kanban") {
+		renderBoardView(el, ctx, toolbar);
+		return;
+	}
 
 	const search = toolbar.createEl("input", { type: "search", cls: "sbd-search", attr: { placeholder: "Filter tasks…", "data-sbd-focus": "task-search" } });
 	search.value = f.search;
@@ -77,16 +81,14 @@ export function renderTasksTab(el: HTMLElement, ctx: DashboardContext, f: TaskFi
 	const cb = doneToggle.createEl("input", { type: "checkbox" });
 	cb.checked = f.showDone;
 	cb.onchange = () => update({ showDone: cb.checked });
-	doneToggle.appendText(f.view === "kanban" ? "All done" : "Show done");
+	doneToggle.appendText("Show done");
 
 	const addBtn = toolbar.createEl("button", { cls: "mod-cta sbd-add" });
 	setIcon(addBtn.createSpan({ cls: "sbd-icon" }), "plus");
 	addBtn.createSpan({ text: "Task" });
 	addBtn.onclick = () => new CaptureModal(ctx.app, ctx.plugin, { project: f.project && f.project !== "__none" ? f.project : undefined }).open();
 
-	const tasks = filterTasks(index.tasks, f, ctx);
-	if (f.view === "kanban") renderKanban(el, tasks, ctx, f);
-	else renderList(el, tasks, ctx, f);
+	renderList(el, filterTasks(index.tasks, f, ctx), ctx, f);
 }
 
 function renderList(el: HTMLElement, tasks: Task[], ctx: DashboardContext, f: TaskFilters): void {
