@@ -170,5 +170,96 @@
     }
   ],
   "trackers": [],
-  "kanbanBoard": "Tasks board.md"
+  "kanbanBoard": "Tasks board.md",
+  "money": {
+    "folder": "Finance/Ledger",
+    "currency": "PHP",
+    "monthlyBudget": 30000,
+    "categories": [
+      {
+        "name": "Food",
+        "icon": "utensils",
+        "color": "orange",
+        "kind": "expense",
+        "budget": 6000
+      },
+      {
+        "name": "Transport",
+        "icon": "bus",
+        "color": "blue",
+        "kind": "expense",
+        "budget": 2500
+      },
+      {
+        "name": "Bills",
+        "icon": "receipt",
+        "color": "red",
+        "kind": "expense",
+        "budget": 14000
+      },
+      {
+        "name": "Shopping",
+        "icon": "shopping-bag",
+        "color": "pink",
+        "kind": "expense",
+        "budget": 2000
+      },
+      {
+        "name": "Subscriptions",
+        "icon": "repeat",
+        "color": "purple",
+        "kind": "expense",
+        "budget": 800
+      },
+      {
+        "name": "Health",
+        "icon": "heart-pulse",
+        "color": "green",
+        "kind": "expense",
+        "budget": 1500
+      },
+      {
+        "name": "Fun",
+        "icon": "party-popper",
+        "color": "yellow",
+        "kind": "expense",
+        "budget": 2000
+      },
+      {
+        "name": "Other",
+        "icon": "circle-dashed",
+        "color": "gray",
+        "kind": "expense",
+        "budget": 0
+      },
+      {
+        "name": "Salary",
+        "icon": "briefcase",
+        "color": "green",
+        "kind": "income",
+        "budget": 0
+      },
+      {
+        "name": "Freelance",
+        "icon": "laptop",
+        "color": "blue",
+        "kind": "income",
+        "budget": 0
+      },
+      {
+        "name": "Gifts",
+        "icon": "gift",
+        "color": "pink",
+        "kind": "income",
+        "budget": 0
+      },
+      {
+        "name": "Other income",
+        "icon": "plus-circle",
+        "color": "gray",
+        "kind": "income",
+        "budget": 0
+      }
+    ]
+  }
 }

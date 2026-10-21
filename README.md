@@ -70,6 +70,17 @@ It doesn't ask you to reorganize anything. It reads the notes, tasks and frontma
   - a **focus** view per habit, with a 12-month heatmap and days per week against your goal
 - **Other trackers** (optional) for numbers or stages, such as weight, expenses or job applications. They read from daily-note fields, one note per item, or a Markdown table, and give you totals, trends, funnels, goals and an entries table.
 
+### Money: income and expenses
+A **Money** card in the tracker list opens a monthly view of what came in and what went out (PHP by default).
+- **Quick add** reads like a sentence: *Spent / Received ₱[amount] on [category] · [note] · [date]*. You can also type `250 food lunch` or `+52000 salary` into the amount box and the rest fills in.
+- **Figures:** received, spent (with the daily average), net (with the share of income kept), and what's left to spend, with a per-day allowance for the rest of the month.
+- **The month as a curve:** running spending against a dashed budget-pace line, with a projection to month end ("On track for ₱32,010").
+- **Where it went:** categories largest first, each with its amount, a bar, a budget marker and "₱X left / ₱X over" written out. Click a category to filter the ledger. **Where it came from** lists income sources.
+- **Ledger:** grouped by day with daily totals. Filter by spent or received, and search. Click a row to edit or delete it; deleting offers Undo.
+- **Budget & categories:** set a monthly budget and optional budgets per category, and rename, recolor, add or remove categories and income sources.
+- **Commands:** **Log expense**, **Log income** and **Open money**.
+- **Storage:** plain Markdown, one table per month in `Finance/Ledger/YYYY-MM.md`, editable by hand.
+
 ### Library
 ![Library](docs/screenshots/library.png)
 - An A–Z index of every note, grouped under letter headers with divider lines and with folder, type and date in aligned columns. Sorted by recent, it groups by month instead.
@@ -326,13 +337,15 @@ src/
     trackerTypes.ts    tracker definitions and statistics (pure, tested)
     trackerStore.ts    read and write tracker entries and habit checks
     graph.ts           orphans, link suggestions, resurfacing, splitting (pure, tested)
+    ledger.ts          money ledger: parse/edit monthly tables, quick entry, month summary (pure, tested)
+    ledgerStore.ts     read and write the monthly ledger notes
     daily.ts           daily-note config, create, append
   view/
     DashboardView.ts   the full-page view and tab routing
     homeTab.ts  tasksTab.ts  kanban.ts  calendarTab.ts  dayModal.ts
     projectsTab.ts  trackersTab.ts  habits.ts  libraryTab.ts
     CaptureModal.ts  widgets.ts  homeEdit.ts  pickers.ts  labels.ts
-    inboxTab.ts  notesTab.ts  reviewTab.ts
+    inboxTab.ts  notesTab.ts  reviewTab.ts  moneyView.ts  cover.ts  coverControls.ts
     charts.ts  components.ts  trackerModals.ts  dither.ts
   secrets/
     crypto.ts          AES-GCM + PBKDF2 envelope, entry helpers (pure, tested)

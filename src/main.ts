@@ -11,6 +11,8 @@ import { NewNoteModal } from "./view/notesTab";
 import { watchForUpdates } from "./devReload";
 import { SecretsStore } from "./secrets/store";
 import { SecretsModal } from "./secrets/SecretsModal";
+import { LedgerStore } from "./data/ledgerStore";
+import { TxModal } from "./view/moneyView";
 
 /** UI state that must survive dashboard re-renders (but not app restarts). */
 interface UiState {
@@ -24,6 +26,7 @@ export default class SecondBrainPlugin extends Plugin {
 	trackers!: TrackerStore;
 	ui!: UiState;
 	secrets!: SecretsStore;
+	ledger!: LedgerStore;
 	private rebuildSoon = debounce(() => void this.index.build(), 800, true);
 
 	async onload(): Promise<void> {
@@ -36,7 +39,8 @@ export default class SecondBrainPlugin extends Plugin {
 		this.secrets = new SecretsStore(() => this.settings.secrets, () => (adapter instanceof FileSystemAdapter ? adapter.getBasePath() : null));
 		this.register(() => this.secrets.destroy());
 		// Tracker entries are recomputed lazily after any vault change.
-		this.registerEvent(this.index.on("updated", () => this.trackers.invalidate()));
+		this.ledger = new LedgerStore(this.app, () => this.settings.money);
+		this.registerEvent(this.index.on("updated", () => { this.trackers.invalidate(); this.ledger.invalidate(); }));
 
 		this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
 		this.addSettingTab(new DashboardSettingTab(this.app, this));
@@ -58,6 +62,9 @@ export default class SecondBrainPlugin extends Plugin {
 		}
 		this.addCommand({ id: "quick-capture", name: "Quick capture", callback: () => new CaptureModal(this.app, this).open() });
 		this.registerDitherBlock();
+		this.addCommand({ id: "log-expense", name: "Log expense", callback: () => new TxModal(this.app, this, { type: "expense" }, () => this.refreshViews()).open() });
+		this.addCommand({ id: "log-income", name: "Log income", callback: () => new TxModal(this.app, this, { type: "income" }, () => this.refreshViews()).open() });
+		this.addCommand({ id: "open-money", name: "Open money", callback: () => void this.activateView("trackers").then(() => this.openMoney()) });
 		this.addCommand({ id: "open-secrets", name: "Open secrets vault", callback: () => new SecretsModal(this.app, this).open() });
 		this.addCommand({ id: "lock-secrets", name: "Lock secrets vault", callback: () => this.secrets.lock() });
 		this.addCommand({ id: "rebuild-index", name: "Rebuild index", callback: () => void this.index.build() });
@@ -69,6 +76,17 @@ export default class SecondBrainPlugin extends Plugin {
 			this.index.registerEvents((ref) => this.registerEvent(ref));
 			if (this.settings.openOnStartup) await this.activateView();
 		});
+	}
+
+	/** Re-render open dashboards (after a change made outside them, e.g. from a command). */
+	refreshViews(): void {
+		this.ledger.invalidate();
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD)) (leaf.view as unknown as { queueRender?: () => void }).queueRender?.();
+	}
+
+	private openMoney(): void {
+		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD)[0];
+		(leaf?.view as DashboardView | undefined)?.navigate("trackers", { trackers: { selected: "__money" } } as never);
 	}
 
 	async activateView(tab?: TabId): Promise<void> {
@@ -101,6 +119,7 @@ export default class SecondBrainPlugin extends Plugin {
 			reviews: data?.reviews ?? {},
 			savedViews: data?.savedViews ?? [],
 			secrets: { ...d.secrets, ...(data?.secrets ?? {}) },
+			money: { ...d.money, ...(data?.money ?? {}), categories: data?.money?.categories ?? structuredClone(d.money.categories) },
 		};
 		for (const k of ["pomodoro", "taskOrder", "kanbanLanes"]) delete (s as unknown as Record<string, unknown>)[k];
 		delete (s.appearance as { showPomodoro?: unknown }).showPomodoro;

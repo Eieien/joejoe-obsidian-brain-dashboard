@@ -5,3 +5,4 @@ import "./board.test";
 import "./graph.test";
 import "./secrets.test";
 import "./secretsStore.test";
+import "./ledger.test";

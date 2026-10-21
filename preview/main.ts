@@ -5,6 +5,7 @@ import SecondBrainPlugin from "../src/main";
 import { CaptureModal } from "../src/view/CaptureModal";
 import { DashboardView } from "../src/view/DashboardView";
 import { SecretsModal } from "../src/secrets/SecretsModal";
+import { CategoryModal, MoneySettingsModal } from "../src/view/moneyView";
 import { newEntry, type SecretEntry } from "../src/secrets/crypto";
 
 declare const __VAULT__: { path: string; content: string; mtime: number; ctime: number }[];
@@ -73,6 +74,8 @@ async function boot(): Promise<void> {
 		}, 200);
 		if (params.get("coverui") === "repo") [...document.querySelectorAll<HTMLElement>(".sbd-cover-btn")].find((b) => b.textContent === "Reposition")?.click();
 	}, 80);
+	if (params.get("moneysettings")) new MoneySettingsModal(app as never, plugin, () => undefined).open();
+	if (params.get("moneycat")) new CategoryModal(app as never, plugin, plugin.settings.money.categories[0], () => undefined).open();
 	if (params.get("day")) window.setTimeout(() => document.querySelector<HTMLElement>(".sbd-month-cell.is-today")?.click(), 50);
 	// Let async tracker loads settle, then signal ready for screenshots.
 	window.setTimeout(() => document.body.setAttribute("data-ready", "1"), 300);

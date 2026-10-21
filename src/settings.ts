@@ -5,6 +5,8 @@ import { DEFAULT_TRACKERS, type TrackerDef } from "./data/trackerTypes";
 import { DITHER_PALETTES, type DitherPalette } from "./view/dither";
 import type { TaskFilters } from "./view/tasksTab";
 import { DEFAULT_SECRETS, defaultSecretsPath, secretsSupported, type SecretsSettings } from "./secrets/store";
+import { DEFAULT_MONEY_CATEGORIES } from "./data/ledger";
+import type { MoneySettings } from "./data/ledgerStore";
 
 export interface SavedView {
 	name: string;
@@ -182,6 +184,8 @@ export interface DashboardSettings {
 	autoReload: boolean;
 	/** Secrets vault: file location and timeouts only — never secret values. */
 	secrets: SecretsSettings;
+	/** Money tracker: ledger folder, currency, budgets and categories. */
+	money: MoneySettings;
 }
 
 export const DEFAULT_SETTINGS: DashboardSettings = {
@@ -263,6 +267,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
 	savedViews: [],
 	autoReload: true,
 	secrets: DEFAULT_SECRETS,
+	money: { folder: "Finance/Ledger", currency: "PHP", monthlyBudget: 0, categories: DEFAULT_MONEY_CATEGORIES },
 };
 
 export class DashboardSettingTab extends PluginSettingTab {

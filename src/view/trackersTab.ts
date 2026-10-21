@@ -8,6 +8,7 @@ import { barChart, formatNum, hbars, heatmap, lineChart, sparkline } from "./cha
 import { emptyState, pill, section, whenLoaded, type DashboardContext } from "./components";
 import { HabitsModal, renderHabitStats, renderHabitSummary, renderHabitWeek } from "./habits";
 import { EntryModal, TrackerEditModal } from "./trackerModals";
+import { moneyCard, renderMoney, type MoneyState } from "./moneyView";
 
 export interface TrackersState {
 	/** A custom (non-habit) tracker opened in detail. */
@@ -19,6 +20,8 @@ export interface TrackersState {
 	focus?: string;
 	/** Week shown in the habit grid, relative to this week. */
 	weekOffset: number;
+	/** Money view state (month, filters). */
+	money?: MoneyState;
 }
 
 const RANGES: { id: RangeKey; label: string }[] = [
@@ -46,6 +49,15 @@ function rangeToggle(parent: HTMLElement, st: TrackersState, update: (p: Partial
 
 export function renderTrackersTab(el: HTMLElement, ctx: DashboardContext, st: TrackersState, update: (p: Partial<TrackersState>) => void): void {
 	const defs = ctx.plugin.settings.trackers;
+	if (st.selected === "__money") {
+		const ms: MoneyState = { filter: "all", query: "", ...(st.money ?? {}) };
+		renderMoney(el, ctx, ms, (p) => update({ money: { ...ms, ...p } }), () => update({ selected: undefined }));
+		return;
+	}
+	if (st.selected === "__habits") {
+		renderHabitsPage(el, ctx, st, update);
+		return;
+	}
 	const selected = st.selected ? defs.find((d) => d.id === st.selected) : undefined;
 
 	if (selected) {
@@ -58,6 +70,75 @@ export function renderTrackersTab(el: HTMLElement, ctx: DashboardContext, st: Tr
 		return;
 	}
 
+	// ---- Trackers home: one card per tracker ----
+	const home = section(el, {
+		title: "trackers", icon: "activity",
+		action: { label: "New tracker", icon: "plus", onClick: () => new TrackerEditModal(ctx.app, ctx.plugin).open() },
+	});
+	const grid = home.createDiv({ cls: "sbd-home-grid" });
+	habitsCard(grid, ctx, () => update({ selected: "__habits" }));
+	moneyCard(grid, ctx, () => update({ selected: "__money" }));
+	if (defs.length) {
+		const other = section(el, { title: "other trackers", icon: "bar-chart-3" });
+		const bar = other.createDiv({ cls: "sbd-toolbar" });
+		rangeToggle(bar, st, update);
+		renderOverview(other, ctx, defs, st.range, (id) => update({ selected: id }));
+	} else {
+		home.createDiv({ cls: "sbd-empty sbd-home-hint", text: "Track anything else with numbers or stages — workouts, weight, job applications — from daily notes, one note per item, or a table. Use + to add one." });
+	}
+}
+
+/** Card for the trackers home: today's habits and the last seven days. */
+function habitsCard(grid: HTMLElement, ctx: DashboardContext, open: () => void): void {
+	const habitsDefs = ctx.plugin.settings.habits;
+	const card = grid.createDiv({ cls: "sbd-home-card sbd-habits-card", attr: { role: "button", tabindex: "0", "aria-label": "Open habits" } });
+	card.onclick = open;
+	card.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
+	const head = card.createDiv({ cls: "sbd-home-card-head" });
+	setIcon(head.createSpan({ cls: "sbd-home-card-icon sbd-c-violet" }), "check-square");
+	head.createSpan({ cls: "sbd-home-card-name", text: "Habits" });
+	const manage = head.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { "aria-label": "Manage habits" } });
+	setIcon(manage, "settings-2");
+	manage.onclick = (e) => { e.stopPropagation(); new HabitsModal(ctx.app, ctx.plugin, () => ctx.rerender()).open(); };
+	const body = card.createDiv({ cls: "sbd-home-card-body" });
+	if (!habitsDefs.length) { body.createDiv({ cls: "sbd-empty", text: "No habits yet — use the gear to add some." }); return; }
+	whenLoaded(body, ctx.plugin.trackers.habitEntries(), (entries) => {
+		const byDate = new Map(entries.filter((e) => e.date).map((e) => [e.date!, e]));
+		const doneOn = (date: string) => habitsDefs.filter((h) => toBool(byDate.get(date)?.values[h.key]) === true).length;
+		const today = doneOn(ctx.today);
+		const big = body.createDiv({ cls: "sbd-home-card-big" });
+		big.createSpan({ text: `${today}/${habitsDefs.length}` });
+		big.createSpan({ cls: "sbd-home-card-unit", text: today === habitsDefs.length ? " all done today" : " done today" });
+		const week = body.createDiv({ cls: "sbd-habits-week", attr: { "aria-label": "Last seven days" } });
+		let streak = 0, counting = true;
+		for (let i = 6; i >= 0; i--) {
+			const date = addDays(ctx.today, -i);
+			const n = doneOn(date);
+			const col = week.createDiv({ cls: "sbd-habits-day" + (date === ctx.today ? " is-today" : ""), attr: { title: `${date}: ${n}/${habitsDefs.length}` } });
+			const bar = col.createDiv({ cls: "sbd-habits-bar" });
+			bar.createDiv({ cls: "sbd-habits-fill", attr: { style: `height: ${(n / habitsDefs.length) * 100}%` } });
+			col.createSpan({ cls: "sbd-habits-dow", text: moment(date).format("dd").slice(0, 2) });
+		}
+		for (let i = 0; i < 365 && counting; i++) {
+			const n = doneOn(addDays(ctx.today, -i - (today < habitsDefs.length ? 1 : 0)));
+			if (n === habitsDefs.length) streak++; else counting = false;
+		}
+		const facts = body.createDiv({ cls: "sbd-home-card-facts" });
+		const fact = (label: string, value: string) => { const f = facts.createDiv(); f.createDiv({ cls: "sbd-muted", text: label }); f.createDiv({ cls: "sbd-home-card-fact", text: value }); };
+		const last7 = Array.from({ length: 7 }, (_, i) => doneOn(addDays(ctx.today, -i))).reduce((a, b) => a + b, 0);
+		fact("This week", `${Math.round((last7 / (habitsDefs.length * 7)) * 100)}%`);
+		fact("Perfect streak", `${streak} ${streak === 1 ? "day" : "days"}`);
+		fact("Habits", String(habitsDefs.length));
+	});
+}
+
+/** The full habits page: checkboxes for the week, a summary, and statistics. */
+function renderHabitsPage(el: HTMLElement, ctx: DashboardContext, st: TrackersState, update: (p: Partial<TrackersState>) => void): void {
+	const toolbar = el.createDiv({ cls: "sbd-toolbar" });
+	const back = toolbar.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { "aria-label": "All trackers" } });
+	setIcon(back, "arrow-left");
+	back.onclick = () => update({ selected: undefined });
+	toolbar.createEl("h2", { cls: "sbd-page-subtitle", text: "Habits" });
 	const habits = ctx.plugin.trackers.habitEntries();
 	const manage = () => new HabitsModal(ctx.app, ctx.plugin, () => ctx.rerender()).open();
 
@@ -74,17 +155,6 @@ export function renderTrackersTab(el: HTMLElement, ctx: DashboardContext, st: Tr
 	const bar = stats.createDiv({ cls: "sbd-toolbar" });
 	rangeToggle(bar, st, update);
 	whenLoaded(stats, habits, (entries) => renderHabitStats(stats, ctx, entries, { range: st.range, hidden: st.hidden, focus: st.focus }, (p) => update(p)));
-
-	// ---- Other (numeric / collection) trackers ----
-	const other = section(el, {
-		title: "other trackers", icon: "activity",
-		action: { label: "New tracker", icon: "plus", onClick: () => new TrackerEditModal(ctx.app, ctx.plugin).open() },
-	});
-	if (!defs.length) {
-		other.createDiv({ cls: "sbd-empty", text: "Track anything with numbers or stages — workouts, weight, expenses, job applications — from daily notes, one note per item, or a table. Use + to add one." });
-		return;
-	}
-	renderOverview(other, ctx, defs, st.range, (id) => update({ selected: id }));
 }
 
 function trackerHead(parent: HTMLElement, ctx: DashboardContext, def: TrackerDef, big = false): void {

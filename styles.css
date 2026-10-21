@@ -1809,3 +1809,418 @@ input.sbd-sec-label-edit:hover, input.sbd-sec-label-edit:focus { background: var
 /* A zoomed / rotated cover must never widen the page (that scrolled the view sideways mid-drag) */
 .sbd-hero, .sbd-gallery-band, .sbd-banner { overflow: clip; }
 .sbd-root .sbd-inner, .sbd-root .sbd-page-top { overflow-x: clip; }
+
+/* ===================== Money ===================== */
+.sbd-money { --sbd-pos: var(--color-green); --sbd-neg: var(--color-red); display: flex; flex-direction: column; gap: 22px; font-variant-numeric: tabular-nums; }
+.is-pos { color: var(--sbd-pos, var(--color-green)); }
+.is-neg { color: var(--sbd-neg, var(--color-red)); }
+
+/* tracker-list card */
+.sbd-money-card { cursor: pointer; }
+.sbd-money-card:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.sbd-money-card-body { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.sbd-money-card-big { font-family: var(--sbd-display); font-size: 1.6em; line-height: 1.1; color: var(--sbd-ink); }
+.sbd-money-card-foot { display: flex; justify-content: space-between; gap: 8px; }
+.sbd-money-track { position: relative; height: 6px; border-radius: 6px; background: var(--sbd-card-hover); overflow: visible; }
+.sbd-money-track-fill { height: 100%; border-radius: inherit; background: var(--sbd-ink-2); transition: width 400ms cubic-bezier(.2, .7, .3, 1); }
+.sbd-money-track.is-near .sbd-money-track-fill { background: var(--color-orange); }
+.sbd-money-track.is-over .sbd-money-track-fill { background: var(--color-red); }
+.sbd-money-track-pace { position: absolute; top: -3px; bottom: -3px; width: 2px; border-radius: 2px; background: var(--sbd-ink); opacity: .55; }
+
+/* toolbar */
+.sbd-money-bar { display: flex; align-items: center; gap: 12px; }
+.sbd-money-month { display: flex; align-items: center; gap: 4px; margin-right: auto; }
+.sbd-money-title { font-family: var(--sbd-display); font-weight: 400; font-size: 1.7em; margin: 0 6px; letter-spacing: -0.01em; }
+
+/* quick add — one sentence */
+.sbd-money-add {
+	display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+	padding: 10px 12px; border-radius: 14px; background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border);
+}
+.sbd-money-type { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--sbd-card-hover); }
+.sbd-money-type button { height: 30px !important; padding: 0 14px !important; border-radius: 999px; border: none !important; background: transparent !important; box-shadow: none !important; color: var(--sbd-ink-2); font-size: var(--font-ui-small); cursor: pointer; }
+.sbd-money-type button.is-active { background: var(--sbd-surface) !important; color: var(--sbd-ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important; }
+.sbd-money-amt { display: inline-flex; align-items: baseline; gap: 2px; }
+.sbd-money-cur { font-family: var(--sbd-display); font-size: 1.5em; color: var(--sbd-ink-2); }
+.sbd-money-amt input { width: 8.5ch; font-family: var(--sbd-display); font-size: 1.5em !important; height: 40px !important; border: none !important; background: transparent !important; box-shadow: none !important; padding: 0 4px; color: var(--sbd-ink); }
+.sbd-money-amt input:focus { box-shadow: inset 0 -2px 0 var(--interactive-accent) !important; }
+.sbd-money-word { color: var(--sbd-ink-3); font-size: var(--font-ui-small); }
+.sbd-money-add :is(select, .sbd-money-note, .sbd-money-date) { height: 36px; }
+.sbd-money-note { flex: 1 1 180px; min-width: 140px; }
+.sbd-money-date { width: 140px; }
+.sbd-money-add .mod-cta { height: 36px; padding: 0 20px; }
+.sbd-money-err { color: var(--text-error); font-size: var(--font-ui-smaller); min-height: 0; }
+.sbd-money-err:empty { display: none; }
+
+/* figures */
+.sbd-money-figs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--sbd-border); border-bottom: 1px solid var(--sbd-border); }
+.sbd-money-fig { padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sbd-money-fig + .sbd-money-fig { border-left: 1px solid var(--sbd-border); }
+.sbd-money-fig-label { font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); }
+.sbd-money-fig-value { font-family: var(--sbd-display); font-size: 2em; line-height: 1.1; color: var(--sbd-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sbd-money-fig.is-pos .sbd-money-fig-value { color: var(--sbd-pos); }
+.sbd-money-fig.is-neg .sbd-money-fig-value { color: var(--sbd-neg); }
+.sbd-money-fig-note { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); }
+.sbd-money-fig.is-empty .sbd-ghost-btn { align-self: flex-start; margin-top: 6px; border: 1px dashed var(--sbd-border) !important; }
+
+/* the curve */
+.sbd-money-curve { position: relative; }
+.sbd-money-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.sbd-mc-axis { stroke: var(--sbd-border); stroke-width: 1; }
+.sbd-mc-tick { fill: var(--sbd-ink-3); font-size: 11px; font-family: var(--sbd-font); }
+.sbd-mc-budget { stroke: var(--sbd-ink-3); stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
+.sbd-mc-pace { stroke: var(--sbd-ink-3); stroke-width: 1.2; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; opacity: .8; }
+.sbd-mc-area { fill: var(--sbd-ink); opacity: .07; }
+.sbd-mc-line { fill: none; stroke: var(--sbd-ink); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.sbd-mc-line.is-ahead { stroke: var(--color-orange); }
+.sbd-mc-proj { stroke: var(--sbd-ink-2); stroke-width: 1.5; stroke-dasharray: 1 5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.sbd-mc-dot { fill: var(--sbd-surface); stroke: var(--sbd-ink); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.sbd-mc-now { fill: var(--sbd-ink); font-family: var(--sbd-display); font-size: 15px; }
+.sbd-mc-label { font-size: 11.5px; font-family: var(--sbd-font); fill: var(--sbd-ink-2); }
+.sbd-mc-label.is-proj { fill: var(--sbd-ink); }
+.sbd-mc-hit { fill: transparent; }
+.sbd-mc-hit:hover { fill: var(--sbd-ink); opacity: .05; }
+.sbd-mc-empty { fill: var(--sbd-ink-3); font-size: 13px; font-family: var(--sbd-font); }
+.sbd-money-curve-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* columns */
+.sbd-money-cols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 34px; align-items: start; }
+.sbd-money-h { font-family: var(--sbd-display); font-weight: 400; font-size: 1.25em; margin: 0 0 12px; color: var(--sbd-ink); }
+.sbd-money-col .sbd-money-h:not(:first-child) { margin-top: 26px; }
+
+/* categories */
+.sbd-money-cats { display: flex; flex-direction: column; gap: 4px; }
+.sbd-money-catrow {
+	all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; width: 100%;
+	padding: 10px 10px 9px; border-radius: 10px; cursor: pointer; min-height: 44px;
+}
+.sbd-money-catrow:hover { background: var(--sbd-card); }
+.sbd-money-catrow.is-active { background: var(--sbd-card-hover); }
+.sbd-money-catrow:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 1px; }
+.sbd-money-catrow-top, .sbd-money-incrow { display: flex; align-items: center; gap: 10px; }
+.sbd-money-incrow { padding: 6px 10px; }
+.sbd-money-cat-icon { width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 8px; color: var(--c, var(--sbd-ink-2)); background: var(--c-bg, var(--sbd-card-hover)); }
+.sbd-money-cat-icon svg { width: 14px; height: 14px; }
+button.sbd-money-cat-icon { border: none !important; padding: 0 !important; cursor: pointer; height: 26px !important; }
+.sbd-money-catname { flex: 1; min-width: 0; font-size: var(--font-ui-small); color: var(--sbd-ink); }
+.sbd-money-catamt { font-size: var(--font-ui-small); color: var(--sbd-ink); }
+.sbd-money-cattrack { position: relative; height: 6px; margin-left: 36px; border-radius: 6px; background: var(--sbd-card-hover); }
+.sbd-money-catfill { height: 100%; border-radius: inherit; background: var(--c, var(--sbd-ink-2)); opacity: .85; transition: width 400ms cubic-bezier(.2, .7, .3, 1); }
+.sbd-money-catfill.is-over { background: repeating-linear-gradient(135deg, var(--color-red) 0 5px, color-mix(in srgb, var(--color-red) 70%, transparent) 5px 10px); opacity: 1; }
+.sbd-money-catbudget { position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 2px; background: var(--sbd-ink-2); }
+.sbd-money-catmeta { margin-left: 36px; font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); }
+.sbd-money-catmeta.is-over { color: var(--text-error); }
+
+/* ledger */
+.sbd-money-ledger-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.sbd-money-ledger-head .sbd-money-h { margin: 0 auto 0 0; }
+.sbd-money-search { width: 160px; height: 30px; }
+.sbd-money-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px !important; padding: 0 10px !important; margin-bottom: 8px; border-radius: 999px; font-size: var(--font-ui-smaller); background: var(--sbd-card-hover) !important; border: none !important; box-shadow: none !important; cursor: pointer; }
+.sbd-money-chip .sbd-icon svg { width: 12px; height: 12px; }
+.sbd-money-ledger { display: flex; flex-direction: column; }
+.sbd-money-day { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 6px 14px; padding: 12px 0; border-top: 1px solid var(--sbd-border); }
+.sbd-money-dayhead { display: flex; flex-direction: column; align-items: flex-start; }
+.sbd-money-daynum { font-family: var(--sbd-display); font-size: 1.7em; line-height: 1; color: var(--sbd-ink); }
+.sbd-money-dayname { font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); margin-top: 2px; }
+.sbd-money-daytotal { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); margin-top: 6px; }
+.sbd-money-dayrows { display: flex; flex-direction: column; gap: 2px; }
+.sbd-money-tx {
+	all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%;
+	min-height: 44px; padding: 6px 10px; border-radius: 10px; cursor: pointer;
+}
+.sbd-money-tx:hover { background: var(--sbd-card); }
+.sbd-money-tx:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 1px; }
+.sbd-money-tx-text { flex: 1; min-width: 0; }
+.sbd-money-tx-title { font-size: var(--font-ui-small); color: var(--sbd-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sbd-money-tx-sub { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); }
+.sbd-money-tx-amt { font-size: var(--font-ui-small); color: var(--sbd-ink); white-space: nowrap; }
+
+/* modals */
+.modal.sbd-money-modal { width: min(460px, 94vw); border-radius: 16px; }
+.modal.sbd-money-settings { width: min(560px, 94vw); }
+.sbd-money-form { display: flex; flex-direction: column; gap: 10px; }
+.sbd-money-frow { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 12px; }
+.sbd-money-flabel { font-size: var(--font-ui-small); color: var(--sbd-ink-2); }
+.sbd-money-frow :is(input, select) { width: 100%; height: 36px; }
+.sbd-money-ffoot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.sbd-money-del { margin-right: auto; color: var(--text-error) !important; }
+.sbd-money-help { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); margin: 4px 0 10px; }
+.sbd-money-catedit { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.sbd-money-catedit-row { display: flex; align-items: center; gap: 8px; }
+.sbd-money-catedit-name { flex: 1; min-width: 0; height: 32px; }
+.sbd-money-catedit-budget { width: 120px; height: 32px; }
+
+@media (max-width: 900px) {
+	.sbd-money-figs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.sbd-money-fig:nth-child(3) { border-left: none; }
+	.sbd-money-fig:nth-child(n + 3) { border-top: 1px solid var(--sbd-border); }
+	.sbd-money-cols { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) { .sbd-money-gear span:not(.sbd-icon) { display: none; } .sbd-money-date { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .sbd-money-track-fill, .sbd-money-catfill { transition: none; } }
+
+/* ===================== 18-colour palette (available everywhere, incl. modals and menus) ===================== */
+.theme-dark {
+	--c-rose: #e5607a; --c-rose-bg: #4f2430;
+	--c-red: #df5452; --c-red-bg: #522e2a;
+	--c-orange: #e08245; --c-orange-bg: #563521;
+	--c-amber: #e3a33c; --c-amber-bg: #57401c;
+	--c-yellow: #d8c048; --c-yellow-bg: #4f4720;
+	--c-lime: #9cc24a; --c-lime-bg: #37451d;
+	--c-green: #529e72; --c-green-bg: #243d30;
+	--c-emerald: #3fb68b; --c-emerald-bg: #17402f;
+	--c-teal: #3aaea4; --c-teal-bg: #163f3c;
+	--c-cyan: #43b3cf; --c-cyan-bg: #173f4a;
+	--c-sky: #4f9ee0; --c-sky-bg: #1b3650;
+	--c-blue: #379ad3; --c-blue-bg: #143a4e;
+	--c-indigo: #7584e6; --c-indigo-bg: #272d55;
+	--c-violet: #9b7be6; --c-violet-bg: #33284f;
+	--c-purple: #9d68d3; --c-purple-bg: #3c2d49;
+	--c-pink: #d15796; --c-pink-bg: #4e2c3c;
+	--c-brown: #ba856f; --c-brown-bg: #4a3a33;
+	--c-gray: #9b9b9b; --c-gray-bg: #373737;
+}
+.theme-light {
+	--c-rose: #c23b58; --c-rose-bg: #fbdde3;
+	--c-red: #d44c47; --c-red-bg: #ffe2dd;
+	--c-orange: #c96413; --c-orange-bg: #fbe2cd;
+	--c-amber: #b7790f; --c-amber-bg: #fbebc9;
+	--c-yellow: #a28a12; --c-yellow-bg: #f8f0c4;
+	--c-lime: #5f8a14; --c-lime-bg: #e6f2cc;
+	--c-green: #448361; --c-green-bg: #dbeddb;
+	--c-emerald: #16865e; --c-emerald-bg: #d1efe2;
+	--c-teal: #127f77; --c-teal-bg: #d0eeeb;
+	--c-cyan: #11809c; --c-cyan-bg: #d2edf4;
+	--c-sky: #2a72b8; --c-sky-bg: #d8e8f7;
+	--c-blue: #337ea9; --c-blue-bg: #d3e5ef;
+	--c-indigo: #4a58c4; --c-indigo-bg: #dfe2f8;
+	--c-violet: #7151c6; --c-violet-bg: #e7dff8;
+	--c-purple: #9065b0; --c-purple-bg: #e8deee;
+	--c-pink: #c14c8a; --c-pink-bg: #f5e0e9;
+	--c-brown: #9f6b53; --c-brown-bg: #eee0da;
+	--c-gray: #787774; --c-gray-bg: #e3e2e0;
+}
+.sbd-c-rose { --c: var(--c-rose); --c-bg: var(--c-rose-bg); }
+.sbd-c-red { --c: var(--c-red); --c-bg: var(--c-red-bg); }
+.sbd-c-orange { --c: var(--c-orange); --c-bg: var(--c-orange-bg); }
+.sbd-c-amber { --c: var(--c-amber); --c-bg: var(--c-amber-bg); }
+.sbd-c-yellow { --c: var(--c-yellow); --c-bg: var(--c-yellow-bg); }
+.sbd-c-lime { --c: var(--c-lime); --c-bg: var(--c-lime-bg); }
+.sbd-c-green { --c: var(--c-green); --c-bg: var(--c-green-bg); }
+.sbd-c-emerald { --c: var(--c-emerald); --c-bg: var(--c-emerald-bg); }
+.sbd-c-teal { --c: var(--c-teal); --c-bg: var(--c-teal-bg); }
+.sbd-c-cyan { --c: var(--c-cyan); --c-bg: var(--c-cyan-bg); }
+.sbd-c-sky { --c: var(--c-sky); --c-bg: var(--c-sky-bg); }
+.sbd-c-blue { --c: var(--c-blue); --c-bg: var(--c-blue-bg); }
+.sbd-c-indigo { --c: var(--c-indigo); --c-bg: var(--c-indigo-bg); }
+.sbd-c-violet { --c: var(--c-violet); --c-bg: var(--c-violet-bg); }
+.sbd-c-purple { --c: var(--c-purple); --c-bg: var(--c-purple-bg); }
+.sbd-c-pink { --c: var(--c-pink); --c-bg: var(--c-pink-bg); }
+.sbd-c-brown { --c: var(--c-brown); --c-bg: var(--c-brown-bg); }
+.sbd-c-gray { --c: var(--c-gray); --c-bg: var(--c-gray-bg); }
+
+/* ===================== Trackers home cards ===================== */
+.sbd-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+.sbd-home-card {
+	display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 20px; border-radius: 16px; cursor: pointer;
+	background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border); transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.sbd-home-card:hover { background: var(--sbd-card-hover); transform: translateY(-1px); }
+.sbd-home-card:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.sbd-home-card-head { display: flex; align-items: center; gap: 10px; }
+.sbd-home-card-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; color: var(--c); background: var(--c-bg); }
+.sbd-home-card-icon svg { width: 16px; height: 16px; }
+.sbd-home-card-name { flex: 1; font-family: var(--sbd-display); font-size: 1.25em; color: var(--sbd-ink); }
+.sbd-home-card-body { display: flex; flex-direction: column; gap: 12px; }
+.sbd-home-card-big { font-family: var(--sbd-display); font-size: 2.1em; line-height: 1.05; color: var(--sbd-ink); font-variant-numeric: tabular-nums; }
+.sbd-home-card-unit { font-family: var(--sbd-font); font-size: 0.42em; color: var(--sbd-ink-2); }
+.sbd-home-card-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 12px; border-top: 1px solid var(--sbd-border); }
+.sbd-home-card-fact { font-size: var(--font-ui-small); color: var(--sbd-ink); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.sbd-home-card-strip { display: flex; height: 6px; gap: 2px; border-radius: 6px; overflow: hidden; }
+.sbd-home-card-strip > div { background: var(--c); }
+.sbd-home-hint { margin-top: 14px; }
+.sbd-habits-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; height: 76px; }
+.sbd-habits-day { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sbd-habits-bar { flex: 1; width: 100%; max-width: 22px; border-radius: 6px; background: var(--sbd-card-hover); display: flex; align-items: flex-end; overflow: hidden; }
+.sbd-habits-fill { width: 100%; background: var(--c-violet); border-radius: 6px; transition: height 400ms cubic-bezier(.2, .7, .3, 1); }
+.sbd-habits-dow { font-size: 10px; color: var(--sbd-ink-3); }
+.sbd-habits-day.is-today .sbd-habits-dow { color: var(--sbd-ink); font-weight: 600; }
+.sbd-page-subtitle { font-family: var(--sbd-display); font-weight: 400; font-size: 1.6em; margin: 0 auto 0 6px; }
+
+/* ===================== Money: more air ===================== */
+.sbd-money { gap: 28px; }
+.sbd-money-body { display: flex; flex-direction: column; gap: 32px; }
+.sbd-money-bar { margin-bottom: 2px; }
+.sbd-money-panel { padding: 22px 22px 18px; border-radius: 16px; background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border); }
+.sbd-money-chart-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; }
+.sbd-money-chart-head .sbd-money-h { margin: 0; }
+.sbd-money-chart-sub { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); }
+.sbd-money-chart-foot { margin-top: 12px; font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); }
+.sbd-money-cols { gap: 56px; }
+.sbd-money-col .sbd-money-h:not(:first-child) { margin-top: 34px; }
+.sbd-money-add { padding: 14px 16px; gap: 12px; }
+
+/* ---- summary band ---- */
+.sbd-money-hero {
+	display: flex; align-items: center; gap: 32px; padding: 28px 32px; border-radius: 20px;
+	background: linear-gradient(135deg, color-mix(in srgb, var(--c-emerald) 10%, var(--sbd-card)), var(--sbd-card) 60%);
+	box-shadow: inset 0 0 0 1px var(--sbd-border);
+}
+.sbd-money-hero-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.sbd-money-hero-label { font-size: var(--font-ui-small); color: var(--sbd-ink-2); }
+.sbd-money-hero-value { font-family: var(--sbd-display); font-size: clamp(2.6em, 5vw, 3.8em); line-height: 1; letter-spacing: -0.015em; color: var(--sbd-ink); font-variant-numeric: tabular-nums; }
+.sbd-money-hero-value.is-neg { color: var(--c-red); }
+.sbd-money-hero-value.is-pos { color: var(--c-emerald); }
+.sbd-money-hero-note { font-size: var(--font-ui-medium); color: var(--sbd-ink-2); margin-bottom: 10px; }
+.sbd-money-hero .sbd-money-track { height: 8px; max-width: 520px; }
+.sbd-money-hero-sub { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); }
+.sbd-money-setbudget { align-self: flex-start; margin-top: 6px; border: 1px dashed var(--sbd-border) !important; }
+.sbd-money-track-fill { background: var(--c-emerald); }
+.sbd-money-ring { flex: none; }
+.sbd-ring-track { fill: none; stroke: var(--sbd-card-hover); stroke-width: 12; }
+.sbd-ring-fill { fill: none; stroke: var(--c-emerald); stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray 600ms cubic-bezier(.2, .7, .3, 1); }
+.sbd-money-ring.is-near .sbd-ring-fill { stroke: var(--c-amber); }
+.sbd-money-ring.is-over .sbd-ring-fill { stroke: var(--c-red); }
+.sbd-ring-pace { stroke: var(--sbd-ink); stroke-width: 2; stroke-linecap: round; opacity: .6; }
+.sbd-ring-big { fill: var(--sbd-ink); font-family: var(--sbd-display); font-size: 28px; }
+.sbd-ring-small { fill: var(--sbd-ink-3); font-family: var(--sbd-font); font-size: 11px; }
+.sbd-money-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: -14px; }
+.sbd-money-fact { padding: 16px 18px; border-radius: 14px; background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border); display: flex; flex-direction: column; gap: 4px; }
+.sbd-money-fact-label { font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); }
+.sbd-money-fact-value { font-family: var(--sbd-display); font-size: 1.6em; line-height: 1.1; color: var(--sbd-ink); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sbd-money-fact.is-pos .sbd-money-fact-value { color: var(--c-emerald); }
+.sbd-money-fact.is-neg .sbd-money-fact-value { color: var(--c-red); }
+.sbd-money-fact-note { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); }
+.sbd-money .is-pos { color: var(--c-emerald); }
+.sbd-money .is-neg { color: var(--c-red); }
+
+/* ---- charts ---- */
+.sbd-money-insights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.sbd-donut-seg { fill: none; stroke: var(--c); }
+.sbd-donut-big { fill: var(--sbd-ink); font-family: var(--sbd-display); font-size: 24px; }
+.sbd-donut-small { fill: var(--sbd-ink-3); font-family: var(--sbd-font); font-size: 11px; }
+.sbd-money-donut { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.sbd-money-legend { display: flex; flex-direction: column; gap: 7px; flex: 1; min-width: 150px; }
+.sbd-money-legend.is-inline { flex-direction: row; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; }
+.sbd-money-legend-row { display: flex; align-items: center; gap: 8px; font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); }
+.sbd-money-legend-name { flex: 1; color: var(--sbd-ink); }
+.sbd-money-legend-pct { font-variant-numeric: tabular-nums; }
+.sbd-money-swatch { width: 10px; height: 10px; border-radius: 3px; background: var(--c); flex: none; }
+.sbd-money-swatch.is-in { background: var(--c-emerald); }
+.sbd-money-swatch.is-out { background: var(--c-rose); }
+.sbd-money-swatch.is-net { background: transparent; box-shadow: inset 0 0 0 1px var(--sbd-ink-3); }
+.sbd-bar-seg { fill: var(--c); }
+.sbd-bar-seg:hover, .sbd-bar-in:hover, .sbd-bar-out:hover { opacity: .8; }
+.sbd-bar-in { fill: var(--c-emerald); }
+.sbd-bar-out { fill: var(--c-rose); opacity: .85; }
+.sbd-bar-out.is-current { opacity: 1; }
+.sbd-mc-tick.is-current { fill: var(--sbd-ink); font-weight: 600; }
+.sbd-mc-label.is-pos-fill { fill: var(--c-emerald); }
+.sbd-mc-label.is-neg-fill { fill: var(--c-red); }
+.sbd-mc-line { stroke: var(--c-emerald); }
+.sbd-mc-line.is-ahead { stroke: var(--c-amber); }
+.sbd-mc-area { fill: var(--c-emerald); opacity: .1; }
+.sbd-mc-dot { stroke: var(--c-emerald); }
+.sbd-money-weekdays { display: flex; flex-direction: column; gap: 9px; }
+.sbd-money-wd { display: grid; grid-template-columns: 38px minmax(0, 1fr) 76px; align-items: center; gap: 10px; }
+.sbd-money-wd-name { font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); }
+.sbd-money-wd-track { height: 10px; border-radius: 6px; background: var(--sbd-card-hover); overflow: hidden; }
+.sbd-money-wd-fill { height: 100%; border-radius: 6px; background: var(--c-sky); }
+.sbd-money-wd.is-top .sbd-money-wd-fill { background: var(--c-amber); }
+.sbd-money-wd.is-top .sbd-money-wd-name { color: var(--sbd-ink); font-weight: 600; }
+.sbd-money-wd-val { text-align: right; font-size: var(--font-ui-smaller); color: var(--sbd-ink); font-variant-numeric: tabular-nums; }
+
+/* ---- biggest expenses ---- */
+.sbd-money-top { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; counter-reset: big; }
+.sbd-money-top li { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; }
+.sbd-money-top li:hover { background: var(--sbd-card); }
+.sbd-money-top .sbd-money-tx-amt { font-family: var(--sbd-display); font-size: 1.05em; }
+
+/* ---- ledger rows: visible actions ---- */
+.sbd-money-hint { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); margin: -2px 0 6px; }
+.sbd-money-day { grid-template-columns: 70px minmax(0, 1fr); padding: 16px 0; }
+.sbd-money-dayhead { cursor: context-menu; }
+.sbd-money-dayrows { gap: 4px; }
+.sbd-money-tx { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 4px; width: 100%; border-radius: 12px; }
+.sbd-money-tx:hover { background: var(--sbd-card); }
+.sbd-money-tx-main {
+	all: unset; box-sizing: border-box; flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px;
+	min-height: 48px; padding: 8px 10px; border-radius: 12px; cursor: pointer;
+}
+.sbd-money-tx-main:focus-visible, .sbd-money-tx-del:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 1px; }
+.sbd-money-tx-del {
+	all: unset; box-sizing: border-box; flex: none; width: 36px; height: 36px; margin-right: 6px; display: grid; place-items: center;
+	border-radius: 10px; color: var(--sbd-ink-3); cursor: pointer; opacity: .45; transition: opacity 120ms ease, color 120ms ease, background 120ms ease;
+}
+.sbd-money-tx-del svg { width: 15px; height: 15px; }
+.sbd-money-tx:hover .sbd-money-tx-del, .sbd-money-tx:focus-within .sbd-money-tx-del { opacity: 1; }
+.sbd-money-tx-del:hover { color: var(--c-red); background: var(--c-red-bg); }
+@media (hover: none) { .sbd-money-tx-del { opacity: 1; } }
+
+/* ===================== Money dialogs: clean layout ===================== */
+.modal.sbd-money-modal { padding: 22px 24px 20px; }
+.sbd-money-modal .modal-content.sbd-modal-root { padding: 2px 2px 0 !important; background: transparent !important; display: block; }
+.sbd-money-modal .modal-title { margin-bottom: 14px; }
+.modal.sbd-money-settings { width: min(560px, 94vw); }
+.sbd-money-prefixed { display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border-radius: 9px; background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border); }
+.sbd-money-prefixed:focus-within { box-shadow: inset 0 0 0 1.5px var(--interactive-accent); }
+.sbd-money-prefixed > span { color: var(--sbd-ink-3); font-variant-numeric: tabular-nums; }
+.sbd-money-prefixed input { flex: 1; min-width: 0; height: 100% !important; border: none !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; font-variant-numeric: tabular-nums; }
+.sbd-money-prefixed.is-large { height: 52px; padding: 0 16px; border-radius: 12px; }
+.sbd-money-prefixed.is-large > span, .sbd-money-prefixed.is-large input { font-family: var(--sbd-display); font-size: 1.6em !important; }
+.sbd-money-prefixed.is-compact { width: 132px; height: 34px; flex: none; }
+.sbd-money-budgetbox { padding: 16px 18px; border-radius: 14px; background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border); margin-bottom: 20px; }
+.sbd-money-budgetfield { display: flex; flex-direction: column; gap: 8px; }
+.sbd-money-budgetbox .sbd-money-help { margin: 8px 0 0; }
+.sbd-money-tabs { display: flex; margin-bottom: 12px; }
+.sbd-money-tabs button { flex: 1; }
+.sbd-money-catlist { display: flex; flex-direction: column; gap: 2px; max-height: 46vh; overflow-y: auto; margin: 0 -6px; padding: 0 6px; }
+.sbd-money-catline { display: flex; align-items: center; gap: 10px; padding: 6px 6px; border-radius: 10px; }
+.sbd-money-catline:hover { background: var(--sbd-card); }
+.sbd-money-catline .sbd-money-cat-icon { width: 32px; height: 32px !important; border-radius: 9px; }
+.sbd-money-catline-name { flex: 1; min-width: 0; height: 34px; border: none !important; background: transparent !important; box-shadow: none !important; padding: 0 8px !important; border-radius: 8px; font-size: var(--font-ui-medium); }
+.sbd-money-catline-name:hover { background: var(--sbd-card-hover) !important; }
+.sbd-money-catline-name:focus { background: var(--sbd-card-hover) !important; box-shadow: inset 0 0 0 1.5px var(--interactive-accent) !important; }
+.sbd-money-catline-del { opacity: 0; transition: opacity 120ms ease; }
+.sbd-money-catline:hover .sbd-money-catline-del, .sbd-money-catline:focus-within .sbd-money-catline-del { opacity: 1; }
+@media (hover: none) { .sbd-money-catline-del { opacity: 1; } }
+.sbd-money-addcat {
+	all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+	height: 42px; margin-top: 8px; border-radius: 10px; border: 1px dashed var(--sbd-border); color: var(--sbd-ink-2); cursor: pointer; font-size: var(--font-ui-small);
+}
+.sbd-money-addcat:hover { color: var(--sbd-ink); border-color: var(--sbd-ink-3); background: var(--sbd-card); }
+.sbd-money-addcat .sbd-icon svg { width: 14px; height: 14px; }
+.sbd-money-ffoot.is-split { justify-content: space-between; align-items: center; gap: 16px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--sbd-border); }
+.sbd-money-ffoot.is-split .sbd-money-help { margin: 0; max-width: 330px; }
+.sbd-money-frow { margin-bottom: 4px; }
+.sbd-money-form { gap: 12px; }
+.sbd-money-del { display: inline-flex; align-items: center; gap: 6px; }
+
+/* category editor */
+.modal.sbd-money-catmodal { width: min(480px, 94vw); }
+.sbd-money-catpreview { display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 16px; border-radius: 14px; background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border); }
+.sbd-money-cat-icon.is-large { width: 44px; height: 44px; border-radius: 12px; }
+.sbd-money-cat-icon.is-large svg { width: 20px; height: 20px; }
+.sbd-money-catpreview-name { font-family: var(--sbd-display); font-size: 1.3em; }
+.sbd-money-pickerlabel { display: block; margin: 14px 0 8px; }
+.sbd-money-swatches { display: grid; grid-template-columns: repeat(9, 1fr); gap: 8px; }
+.sbd-money-swatchbtn { all: unset; box-sizing: border-box; aspect-ratio: 1; border-radius: 50%; background: var(--c); cursor: pointer; box-shadow: 0 0 0 2px transparent; transition: transform 120ms ease, box-shadow 120ms ease; }
+.sbd-money-swatchbtn:hover { transform: scale(1.1); }
+.sbd-money-swatchbtn.is-active { box-shadow: 0 0 0 2px var(--sbd-surface), 0 0 0 4px var(--c); }
+.sbd-money-swatchbtn:focus-visible { box-shadow: 0 0 0 2px var(--sbd-surface), 0 0 0 4px var(--interactive-accent); }
+.sbd-money-icons { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; max-height: 190px; overflow-y: auto; }
+.sbd-money-iconbtn { all: unset; box-sizing: border-box; aspect-ratio: 1; display: grid; place-items: center; border-radius: 9px; color: var(--sbd-ink-2); cursor: pointer; }
+.sbd-money-iconbtn svg { width: 16px; height: 16px; }
+.sbd-money-iconbtn:hover { background: var(--sbd-card-hover); color: var(--sbd-ink); }
+.sbd-money-iconbtn.is-active { background: var(--c-bg); color: var(--c); box-shadow: inset 0 0 0 1.5px var(--c); }
+.sbd-money-iconbtn:focus-visible { outline: 2px solid var(--interactive-accent); }
+
+@media (max-width: 900px) {
+	.sbd-money-insights { grid-template-columns: 1fr; }
+	.sbd-money-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.sbd-money-hero { flex-direction: column; align-items: stretch; padding: 22px; }
+	.sbd-money-ring { align-self: center; }
+}
+@media (prefers-reduced-motion: reduce) { .sbd-home-card, .sbd-ring-fill, .sbd-habits-fill { transition: none; } .sbd-home-card:hover { transform: none; } }
+
+.sbd-money-swatches { grid-template-columns: repeat(auto-fill, 30px); gap: 10px; }
