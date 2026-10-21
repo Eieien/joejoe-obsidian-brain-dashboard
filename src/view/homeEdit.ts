@@ -1,6 +1,7 @@
 import { App, getIcon, Modal, setIcon, Setting, TFolder } from "obsidian";
 import type SecondBrainPlugin from "../main";
-import { DARK_SURFACES, HOME_SECTIONS, PILL_COLORS, type DarkSurface, type PillColor, type QuickLink } from "../settings";
+import { DARK_SURFACES, HOME_SECTIONS, PILL_COLORS, type DarkSurface, type PillColor, type QuickLink, type PageStyle, type CoverStyle } from "../settings";
+import { DITHER_PALETTES, type DitherPalette } from "./dither";
 import { IconPickerModal } from "./pickers";
 
 /** Edit the rotating quotes (one per line). */
@@ -153,9 +154,21 @@ export class HomeLayoutModal extends Modal {
 		new Setting(contentEl).setName("Clock").addToggle((t) => t.setValue(a.showClock).onChange((v) => { a.showClock = v; }));
 		new Setting(contentEl).setName("Quote").addToggle((t) => t.setValue(a.showQuote).onChange((v) => { a.showQuote = v; }));
 
+		new Setting(contentEl).setName("Pixel effects").setHeading();
+		const px = a.pixel;
+		new Setting(contentEl).setName("Pixel field widget").addToggle((t) => t.setValue(px.field).onChange((v) => { px.field = v; }));
+		new Setting(contentEl).setName("Dissolve transitions").addToggle((t) => t.setValue(px.transitions).onChange((v) => { px.transitions = v; }));
+		new Setting(contentEl).setName("Pixel size").addSlider((sl) => sl.setLimits(2, 8, 1).setValue(px.size).setDynamicTooltip().onChange((v) => { px.size = v; }));
+		new Setting(contentEl).setName("Dither palette").addDropdown((d) => {
+			DITHER_PALETTES.forEach((o) => d.addOption(o.value, o.label));
+			d.setValue(px.palette).onChange((v) => { px.palette = v as DitherPalette; });
+		});
+
 		new Setting(contentEl).setName("Look").setHeading();
-		new Setting(contentEl).setName("Style").addDropdown((d) => d.addOption("mono", "Mono page").addOption("theme", "Theme native")
-			.setValue(a.style).onChange((v) => { a.style = v as "mono" | "theme"; }));
+		new Setting(contentEl).setName("Style").addDropdown((d) => d.addOption("mono", "Mono page").addOption("gallery", "Gallery (warm, serif)").addOption("theme", "Theme native")
+			.setValue(a.style).onChange((v) => { a.style = v as PageStyle; }));
+		new Setting(contentEl).setName("Cover style").addDropdown((d) => d.addOption("hero", "Blended hero").addOption("panels", "Split panels (b&w)").addOption("full", "Full image")
+			.setValue(a.coverStyle ?? "panels").onChange((v) => { a.coverStyle = v as CoverStyle; }));
 		new Setting(contentEl).setName("Dark mode surfaces").setDesc("Only affects dark mode.").addDropdown((d) => {
 			DARK_SURFACES.forEach((o) => d.addOption(o.value, o.label));
 			d.setValue(a.darkSurface ?? "default").onChange((v) => { a.darkSurface = v as DarkSurface; });

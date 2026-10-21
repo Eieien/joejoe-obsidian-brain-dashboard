@@ -27,7 +27,7 @@ for (const spec of shots) {
 	const out = path.resolve(outDir, `${name}.png`);
 	execFileSync(browser, [
 		"--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1",
-		`--window-size=${size.replace("x", ",")}`, "--virtual-time-budget=3000",
+		`--window-size=${size.replace("x", ",")}`, ...(process.env.REDUCED ? ["--force-prefers-reduced-motion"] : []), ...(process.env.REALTIME ? ["--timeout=2500"] : ["--virtual-time-budget=3000"]),
 		`--screenshot=${out}`, `${page}#${hash}`,
 	], { stdio: "ignore" });
 	console.log(`${name}: ${out}`);

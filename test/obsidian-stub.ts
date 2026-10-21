@@ -2,3 +2,5 @@
 export class PluginSettingTab {}
 export class Setting {}
 export type App = unknown;
+export class TFile {}
+export const Platform = { isDesktopApp: true };

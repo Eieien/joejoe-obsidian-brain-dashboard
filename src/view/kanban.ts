@@ -439,7 +439,7 @@ class NewBoardModal extends Modal {
 }
 
 /** Small one-field prompt. */
-class TextPromptModal extends Modal {
+export class TextPromptModal extends Modal {
 	constructor(app: App, private title: string, private initial: string, private onSubmit: (value: string) => void) {
 		super(app);
 	}

@@ -62,7 +62,7 @@ export function debounce<T extends unknown[]>(fn: (...a: T) => void, ms: number)
 	let t: number | undefined;
 	return (...a: T) => { window.clearTimeout(t); t = window.setTimeout(() => fn(...a), ms); };
 }
-export class Notice { constructor(msg: string) { console.log("[Notice]", msg); } }
+export class Notice { constructor(msg: string | DocumentFragment, _t?: number) { console.log("[Notice]", typeof msg === "string" ? msg : msg.textContent); } hide() {} }
 
 export class Events {
 	private handlers = new Map<string, ((...a: unknown[]) => void)[]>();
@@ -112,6 +112,7 @@ function parseCache(content: string): Cache {
 	return cache;
 }
 
+export class MarkdownRenderChild { constructor(public containerEl: HTMLElement) {} onunload() {} }
 export function getAllTags(cache: Cache): string[] {
 	const fmTags = cache.frontmatter?.tags;
 	const fm = (Array.isArray(fmTags) ? fmTags : fmTags ? [fmTags] : []).map((t) => `#${String(t).replace(/^#/, "")}`);
@@ -121,7 +122,7 @@ export function getAllTags(cache: Cache): string[] {
 export class App {
 	vault: Vault;
 	metadataCache: MetadataCache;
-	workspace = { getLeaf: () => ({ openFile: async (f: TFile) => console.log("open", f.path) }), requestSaveLayout() {}, onLayoutReady(cb: () => void) { cb(); }, getLeavesOfType: () => [], revealLeaf: async () => {} };
+	workspace = { getLeaf: () => ({ openFile: async (f: TFile) => console.log("open", f.path) }), requestSaveLayout() {}, getLastOpenFiles: () => ["Notes/Spaced repetition.md"], onLayoutReady(cb: () => void) { cb(); }, getLeavesOfType: () => [], revealLeaf: async () => {} };
 	fileManager = { processFrontMatter: async (_f: TFile, fn: (fm: Record<string, unknown>) => void) => fn({}), getAvailablePathForAttachment: async (n: string) => `Attachments/${n}` };
 	internalPlugins = { getPluginById: (id: string) => (id === "daily-notes" ? { enabled: true, instance: { options: { folder: "Daily", format: "YYYY-MM-DD" } } } : undefined) };
 	constructor(files: { path: string; content: string; mtime: number; ctime: number }[]) {
@@ -160,13 +161,22 @@ class Vault extends Events {
 	getFiles() { return [...this.map.values()].filter((f): f is TFile => f instanceof TFile); }
 	getAllLoadedFiles() { return [...this.map.values()]; }
 	async createBinary(p: string) { return this.addFile(p, ""); }
+	async readBinary(f: TFile) {
+		const bin = atob(f.content);
+		const out = new Uint8Array(bin.length);
+		for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+		return out.buffer;
+	}
 	getMarkdownFiles() { return [...this.map.values()].filter((f): f is TFile => f instanceof TFile && f.extension === "md"); }
 	async cachedRead(f: TFile) { return f.content; }
 	async read(f: TFile) { return f.content; }
 	async process(f: TFile, fn: (d: string) => string) { f.content = fn(f.content); return f.content; }
 	async create(p: string, c: string) { return this.addFile(p, c); }
 	async createFolder(p: string) { this.folder(p); }
-	getResourcePath(f: TFile) { return `../../demo-vault/${f.path}`; }
+	getResourcePath(f: TFile) {
+		const ext = f.extension.toLowerCase();
+		return f.extension === "md" ? `../../demo-vault/${f.path}` : `data:image/${ext === "jpg" ? "jpeg" : ext === "svg" ? "svg+xml" : ext};base64,${f.content}`;
+	}
 }
 
 class MetadataCache extends Events {
@@ -195,10 +205,11 @@ class MetadataCache extends Events {
 // ---------- Views / plugins / UI ----------
 export class Component { registerEvent() {} registerInterval(id: number) { return id; } register() {} }
 export class ItemView extends Component {
-	contentEl: HTMLElement; app: App;
+	contentEl: HTMLElement; containerEl: HTMLElement; app: App;
 	constructor(public leaf: { app: App; containerEl: HTMLElement }) {
 		super();
 		this.app = leaf.app;
+		this.containerEl = leaf.containerEl;
 		this.contentEl = leaf.containerEl.createDiv({ cls: "view-content" });
 	}
 	getState() { return {}; }
@@ -208,7 +219,7 @@ export class Plugin extends Component {
 	constructor(public app: App, public manifest: unknown) { super(); }
 	async loadData() { return (window as unknown as { __SBD_DATA__: unknown }).__SBD_DATA__ ?? null; }
 	async saveData() {}
-	addCommand() {} addRibbonIcon() {} addSettingTab() {} registerView() {}
+	addCommand() {} addRibbonIcon() {} addSettingTab() {} registerView() {} registerMarkdownCodeBlockProcessor() {}
 }
 export class PluginSettingTab { containerEl = document.createElement("div"); constructor(public app: App, public plugin: unknown) {} }
 export class Modal {
@@ -248,3 +259,6 @@ export const MarkdownRenderer = {
 export type ViewStateResult = unknown;
 export type WorkspaceLeaf = unknown;
 export type TextComponent = unknown;
+
+export const Platform = { isDesktopApp: true };
+export class FileSystemAdapter { getBasePath() { return ""; } }

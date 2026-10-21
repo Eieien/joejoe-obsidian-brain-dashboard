@@ -8,7 +8,7 @@ import { dueChip, emptyState, pill, priorityBadge, renderTask, section, whenLoad
 import { renderHabitToday, renderHabitWeek } from "./habits";
 import { notebookRow } from "./libraryTab";
 import type { TaskFilters } from "./tasksTab";
-import { countdown, flipClock, imageTiles, miniCalendar, pageHeader, quickLinks, timeProgress } from "./widgets";
+import { countdown, flipClock, imageTiles, miniCalendar, pageHeader, pixelFieldTile, quickLinks, timeProgress } from "./widgets";
 
 export interface HomeState {
 	notebook: "recent" | "due" | "review";
@@ -81,8 +81,16 @@ function renderTodo(page: HTMLElement, ctx: DashboardContext, st: HomeState, upd
 		const d = explicit(t);
 		return d ? d === tomorrow : index.noteDate(t.path) === tomorrow;
 	};
-	const todayList = sortTasks(open.filter(inToday), "smart", today, settings);
-	const tomorrowList = sortTasks(open.filter((t) => !inToday(t) && inTomorrow(t)), "smart", today, settings);
+	// Tasks ticked today stay in their group, crossed out, until tomorrow.
+	const doneToday = tasks.filter((t) => t.status === "done" && t.doneDate === today);
+	const todayList = [
+		...sortTasks(open.filter(inToday), "smart", today, settings),
+		...doneToday.filter((t) => !inTomorrow(t)),
+	];
+	const tomorrowList = [
+		...sortTasks(open.filter((t) => !inToday(t) && inTomorrow(t)), "smart", today, settings),
+		...doneToday.filter((t) => inTomorrow(t)),
+	];
 
 	const fb = section(split, { title: "things to do", icon: "list-checks", action: { label: "All tasks", icon: "arrow-right", onClick: () => goToTasks({ due: "urgent" }) } });
 
@@ -118,7 +126,8 @@ function renderTodo(page: HTMLElement, ctx: DashboardContext, st: HomeState, upd
 		const head = fb.createDiv({ cls: "sbd-todo-group" });
 		head.createSpan({ cls: "sbd-todo-group-title", text: title });
 		head.createSpan({ cls: "sbd-muted", text: moment(date).format("ddd, MMM D") });
-		head.createSpan({ cls: "sbd-count", text: String(list.length) });
+		const left = list.filter(isOpen).length;
+		head.createSpan({ cls: "sbd-count", text: left === list.length ? String(left) : `${left} left · ${list.length - left} done` });
 		if (!list.length) { fb.createDiv({ cls: "sbd-empty", text: empty }); return; }
 		for (const t of list.slice(0, 10)) renderTask(fb, t, ctx);
 		if (list.length > 10) fb.createDiv({ cls: "sbd-load-more", text: `+ ${list.length - 10} more` }).onclick = () => ctx.openCalendarDay(date);
@@ -164,6 +173,7 @@ function renderWidgets(page: HTMLElement, ctx: DashboardContext): void {
 	if (a.showCountdown) countdown(w, ctx);
 	if (a.showTimeProgress) timeProgress(w, ctx);
 	if (a.showClock) flipClock(w, ctx);
+	if (a.pixel.field) pixelFieldTile(w, ctx);
 	imageTiles(w, ctx);
 }
 

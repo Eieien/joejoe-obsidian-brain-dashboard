@@ -12,4 +12,9 @@ fs.mkdirSync(dest, { recursive: true });
 for (const f of ["main.js", "manifest.json", "styles.css"]) {
   fs.copyFileSync(f, path.join(dest, f));
 }
-console.log(`Deployed to ${dest}. Reload Obsidian and enable "joejoe's second brain".`);
+// The companion theme: <vault>/.obsidian/themes/Joejoe Gallery
+const themeName = "Joejoe Gallery";
+const themeDest = path.join(vault, ".obsidian", "themes", themeName);
+fs.mkdirSync(themeDest, { recursive: true });
+for (const f of ["theme.css", "manifest.json"]) fs.copyFileSync(path.join("theme", themeName, f), path.join(themeDest, f));
+console.log(`Deployed to ${dest} (and theme to ${themeDest}). Reload Obsidian and enable "joejoe's second brain"; pick "${themeName}" under Settings → Appearance → Themes.`);

@@ -3,6 +3,10 @@ import type SecondBrainPlugin from "../main";
 import { styleClasses } from "../settings";
 import { CaptureModal } from "./CaptureModal";
 import { DayModal } from "./dayModal";
+import { inboxItems, renderInboxTab, type InboxState } from "./inboxTab";
+import { renderNotesTab, type NotesState } from "./notesTab";
+import { renderReviewTab, type ReviewState } from "./reviewTab";
+import { dissolveIn } from "./dither";
 import { DEFAULT_CAL_LAYERS, renderCalendarTab, type CalendarState } from "./calendarTab";
 import type { DashboardContext } from "./components";
 import { defaultHome, renderHomeTab, type HomeState } from "./homeTab";
@@ -13,14 +17,17 @@ import { renderTrackersTab, type TrackersState } from "./trackersTab";
 
 export const VIEW_TYPE_DASHBOARD = "second-brain-dashboard";
 
-export type TabId = "home" | "tasks" | "calendar" | "projects" | "trackers" | "library";
+export type TabId = "home" | "inbox" | "tasks" | "calendar" | "projects" | "notes" | "trackers" | "review" | "library";
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
 	{ id: "home", label: "home", icon: "home" },
+	{ id: "inbox", label: "inbox", icon: "inbox" },
 	{ id: "tasks", label: "tasks", icon: "check-square" },
 	{ id: "calendar", label: "calendar", icon: "calendar" },
 	{ id: "projects", label: "projects", icon: "folder-kanban" },
+	{ id: "notes", label: "notes", icon: "gem" },
 	{ id: "trackers", label: "trackers", icon: "activity" },
+	{ id: "review", label: "review", icon: "clipboard-check" },
 	{ id: "library", label: "library", icon: "library" },
 ];
 
@@ -32,6 +39,9 @@ interface DashboardState {
 	projects: ProjectsState;
 	trackers: TrackersState;
 	library: LibraryState;
+	inbox: InboxState;
+	notes: NotesState;
+	review: ReviewState;
 }
 
 type Patch = { [K in Exclude<keyof DashboardState, "tab">]?: Partial<DashboardState[K]> };
@@ -40,6 +50,7 @@ export class DashboardView extends ItemView {
 	private state: DashboardState;
 	private renderQueued = false;
 	private intervals: number[] = [];
+	private cleanups: (() => void)[] = [];
 	private lastWidth = 0;
 	private lastTab: TabId | null = null;
 
@@ -53,6 +64,9 @@ export class DashboardView extends ItemView {
 			projects: { show: "active" },
 			trackers: { range: "month", hidden: [], weekOffset: 0 },
 			library: defaultLibrary(),
+			inbox: {},
+			notes: {},
+			review: { week: "" },
 		};
 	}
 
@@ -94,6 +108,9 @@ export class DashboardView extends ItemView {
 				projects: { ...cur.projects, ...(s.projects ?? {}) },
 				trackers: { ...cur.trackers, ...(s.trackers ?? {}) },
 				library: { ...cur.library, ...(s.library ?? {}) },
+				inbox: { ...cur.inbox, ...(s.inbox ?? {}) },
+				notes: { ...cur.notes, ...(s.notes ?? {}) },
+				review: { ...cur.review, ...(s.review ?? {}) },
 			};
 		}
 		await super.setState(state, result);
@@ -122,6 +139,9 @@ export class DashboardView extends ItemView {
 	private clearIntervals(): void {
 		for (const id of this.intervals) window.clearInterval(id);
 		this.intervals = [];
+		for (const fn of this.cleanups.splice(0)) {
+			try { fn(); } catch (e) { console.error(e); }
+		}
 	}
 
 	render(): void {
@@ -136,6 +156,10 @@ export class DashboardView extends ItemView {
 		root.empty();
 		root.removeClass("sbd-style-mono", "sbd-dark-darker", "sbd-dark-plain", "sbd-dark-black");
 		root.addClass(...styleClasses(this.plugin.settings.appearance));
+		// The whole tab (Obsidian's title bar included) takes the dashboard surface, so nothing shows a seam.
+		const leaf = this.containerEl;
+		leaf.removeClass("sbd-dark-darker", "sbd-dark-plain", "sbd-dark-black", "sbd-style-gallery");
+		leaf.addClass("sbd-leaf", ...styleClasses(this.plugin.settings.appearance).filter((c) => c.startsWith("sbd-dark-") || c === "sbd-style-gallery"));
 		this.lastWidth = root.clientWidth;
 
 		const ctx: DashboardContext = {
@@ -150,6 +174,7 @@ export class DashboardView extends ItemView {
 			openTrackers: () => this.navigate("trackers", { trackers: { selected: undefined, focus: undefined } }),
 			rerender: () => this.render(),
 			addInterval: (id) => this.intervals.push(id),
+			addCleanup: (fn) => this.cleanups.push(fn),
 		};
 
 		// ---- Header: tabs + actions ----
@@ -159,6 +184,10 @@ export class DashboardView extends ItemView {
 			const b = tabs.createEl("button", { cls: `sbd-tab ${this.state.tab === t.id ? "is-active" : ""}` });
 			setIcon(b.createSpan({ cls: "sbd-icon" }), t.icon);
 			b.createSpan({ text: t.label });
+			if (t.id === "inbox" && this.plugin.index.ready) {
+				const n = inboxItems(ctx).length;
+				if (n) b.createSpan({ cls: "sbd-tab-badge", text: String(n) });
+			}
 			b.onclick = () => this.navigate(t.id, t.id === "projects" ? { projects: { selected: undefined } } : t.id === "trackers" ? { trackers: { selected: undefined } } : {});
 		}
 		const actions = header.createDiv({ cls: "sbd-header-actions" });
@@ -177,7 +206,11 @@ export class DashboardView extends ItemView {
 		}
 		const inner = content.createDiv({ cls: "sbd-inner" });
 		// Entrance motion only when the tab actually changes, not on live refreshes.
-		if (this.lastTab !== this.state.tab) inner.addClass("sbd-enter");
+		if (this.lastTab !== this.state.tab) {
+			inner.addClass("sbd-enter");
+			const px = this.plugin.settings.appearance.pixel;
+			if (px.transitions && this.lastTab !== null) dissolveIn(content, px.size);
+		}
 		this.lastTab = this.state.tab;
 
 		switch (this.state.tab) {
@@ -195,6 +228,15 @@ export class DashboardView extends ItemView {
 				break;
 			case "trackers":
 				renderTrackersTab(inner, ctx, this.state.trackers, (p) => this.navigate("trackers", { trackers: p }));
+				break;
+			case "inbox":
+				renderInboxTab(inner, ctx, this.state.inbox, (p) => this.navigate("inbox", { inbox: p }));
+				break;
+			case "notes":
+				renderNotesTab(inner, ctx, this.state.notes, (p) => this.navigate("notes", { notes: p }));
+				break;
+			case "review":
+				renderReviewTab(inner, ctx, this.state.review, (p) => this.navigate("review", { review: p }));
 				break;
 			case "library":
 				renderLibraryTab(inner, ctx, this.state.library, (p) => this.navigate("library", { library: p }));

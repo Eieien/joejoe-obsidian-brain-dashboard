@@ -2,3 +2,6 @@
 import "./parser.test";
 import "./trackers.test";
 import "./board.test";
+import "./graph.test";
+import "./secrets.test";
+import "./secretsStore.test";

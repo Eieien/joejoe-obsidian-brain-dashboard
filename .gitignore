@@ -7,4 +7,8 @@ demo-vault/.obsidian/plugins/*/styles.css
 demo-vault/.obsidian/plugins/*/manifest.json
 demo-vault/.obsidian/workspace*.json
 preview/out/
-.claude/
+
+# Encrypted secrets vault files (never commit, even encrypted)
+*.enc
+*.enc.bak
+*.enc.tmp

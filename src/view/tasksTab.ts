@@ -1,12 +1,12 @@
-import { setIcon } from "obsidian";
+import { Menu, setIcon } from "obsidian";
 import { DUE_BUCKET_ORDER, daysUntil, dueBucket, isDueToday, isOpen, isOverdue, isUrgent, sortTasks } from "../data/queries";
 import { PRIORITY_LABELS, STATUS_LABELS, type Priority, type Task, type TaskStatus } from "../types";
 import { CaptureModal } from "./CaptureModal";
-import { renderBoardView } from "./kanban";
+import { renderBoardView, TextPromptModal } from "./kanban";
 import { emptyState, renderTask, statusIcon, type DashboardContext } from "./components";
 
 export interface TaskFilters {
-	view: "kanban" | "list";
+	view: "kanban" | "list" | "matrix";
 	search: string;
 	priority: "" | `${Priority}`;
 	label: string;
@@ -49,10 +49,11 @@ export function renderTasksTab(el: HTMLElement, ctx: DashboardContext, f: TaskFi
 
 	// View toggle
 	const seg = toolbar.createDiv({ cls: "sbd-segmented" });
-	(["kanban", "list"] as const).forEach((v) => {
-		const b = seg.createEl("button", { cls: f.view === v ? "is-active" : "", attr: { "aria-label": v === "kanban" ? "Your Kanban plugin board" : "Tasks found in your notes" } });
-		setIcon(b.createSpan({ cls: "sbd-icon" }), v === "kanban" ? "square-kanban" : "list");
-		b.createSpan({ text: v === "kanban" ? "Board" : "List" });
+	const views = { kanban: ["Board", "square-kanban", "Your Kanban plugin board"], list: ["List", "list", "Tasks found in your notes"], matrix: ["Matrix", "grid-2x2", "Urgent / important (Eisenhower)"] } as const;
+	(["kanban", "list", "matrix"] as const).forEach((v) => {
+		const b = seg.createEl("button", { cls: f.view === v ? "is-active" : "", attr: { "aria-label": views[v][2] } });
+		setIcon(b.createSpan({ cls: "sbd-icon" }), views[v][1]);
+		b.createSpan({ text: views[v][0] });
 		b.onclick = () => update({ view: v });
 	});
 	if (f.view === "kanban") {
@@ -77,6 +78,40 @@ export function renderTasksTab(el: HTMLElement, ctx: DashboardContext, f: TaskFi
 		select(toolbar, "Group", f.group, [["none", "No grouping"], ["due", "Group: Due"], ["status", "Group: Status"], ["priority", "Group: Priority"], ["project", "Group: Project"]], (v) => update({ group: v as TaskFilters["group"] }));
 	}
 
+	// Saved views: named filter combinations.
+	const saved = ctx.plugin.settings.savedViews;
+	const viewSel = toolbar.createEl("select", { cls: "dropdown sbd-select", attr: { "aria-label": "Saved views" } });
+	viewSel.createEl("option", { value: "", text: saved.length ? "Saved views…" : "No saved views" });
+	saved.forEach((v, i) => viewSel.createEl("option", { value: String(i), text: v.name }));
+	viewSel.createEl("option", { value: "__save", text: "+ Save current view…" });
+	if (saved.length) viewSel.createEl("option", { value: "__delete", text: "Delete a saved view…" });
+	viewSel.onchange = () => {
+		const v = viewSel.value;
+		viewSel.value = "";
+		if (v === "__save") {
+			new TextPromptModal(ctx.app, "Save view as", "", async (name) => {
+				const i = saved.findIndex((x) => x.name === name);
+				const entry = { name, filters: { ...f, search: f.search } };
+				if (i >= 0) saved[i] = entry; else saved.push(entry);
+				await ctx.plugin.persist();
+				ctx.rerender();
+			}).open();
+		} else if (v === "__delete") {
+			const menu = new Menu();
+			for (const x of saved) {
+				menu.addItem((i) => i.setTitle(`Delete “${x.name}”`).setIcon("trash-2").onClick(async () => {
+					ctx.plugin.settings.savedViews = saved.filter((y) => y !== x);
+					await ctx.plugin.persist();
+					ctx.rerender();
+				}));
+			}
+			const r = viewSel.getBoundingClientRect();
+			menu.showAtPosition({ x: r.left, y: r.bottom });
+		} else if (v) {
+			update({ ...saved[Number(v)].filters });
+		}
+	};
+
 	const doneToggle = toolbar.createEl("label", { cls: "sbd-toggle" });
 	const cb = doneToggle.createEl("input", { type: "checkbox" });
 	cb.checked = f.showDone;
@@ -88,7 +123,39 @@ export function renderTasksTab(el: HTMLElement, ctx: DashboardContext, f: TaskFi
 	addBtn.createSpan({ text: "Task" });
 	addBtn.onclick = () => new CaptureModal(ctx.app, ctx.plugin, { project: f.project && f.project !== "__none" ? f.project : undefined }).open();
 
-	renderList(el, filterTasks(index.tasks, f, ctx), ctx, f);
+	const filtered = filterTasks(index.tasks, f, ctx);
+	if (f.view === "matrix") renderMatrix(el, filtered, ctx, f);
+	else renderList(el, filtered, ctx, f);
+}
+
+/**
+ * Eisenhower matrix. Urgent = overdue, due soon, P1 or #urgent. Important = P1/P2,
+ * #important or #needs-to-be-done, or part of a project.
+ */
+function renderMatrix(el: HTMLElement, tasks: Task[], ctx: DashboardContext, f: TaskFilters): void {
+	const s = ctx.plugin.settings;
+	const open = tasks.filter((t) => f.showDone || isOpen(t));
+	const important = (t: Task) => t.priority <= 2 || t.labels.includes("important") || t.labels.includes("needs-to-be-done") || !!t.project;
+	const quadrants = [
+		{ key: "do", title: "Do now", hint: "urgent · important", icon: "zap", match: (t: Task) => isUrgent(t, ctx.today, s) && important(t) },
+		{ key: "schedule", title: "Schedule", hint: "important · not urgent", icon: "calendar-clock", match: (t: Task) => !isUrgent(t, ctx.today, s) && important(t) },
+		{ key: "delegate", title: "Delegate or batch", hint: "urgent · less important", icon: "users", match: (t: Task) => isUrgent(t, ctx.today, s) && !important(t) },
+		{ key: "later", title: "Later / drop", hint: "neither", icon: "archive", match: (t: Task) => !isUrgent(t, ctx.today, s) && !important(t) },
+	];
+	const grid = el.createDiv({ cls: "sbd-matrix-grid" });
+	for (const q of quadrants) {
+		const list = sortTasks(open.filter(q.match), "smart", ctx.today, s);
+		const box = grid.createDiv({ cls: `sbd-quadrant sbd-q-${q.key}` });
+		const head = box.createDiv({ cls: "sbd-quadrant-head" });
+		setIcon(head.createSpan({ cls: "sbd-icon" }), q.icon);
+		head.createSpan({ cls: "sbd-quadrant-title", text: q.title });
+		head.createSpan({ cls: "sbd-muted", text: q.hint });
+		head.createSpan({ cls: "sbd-count", text: String(list.length) });
+		const body = box.createDiv({ cls: "sbd-quadrant-body" });
+		if (!list.length) emptyState(body, "Nothing here.");
+		for (const t of list.slice(0, 30)) renderTask(body, t, ctx);
+		if (list.length > 30) body.createDiv({ cls: "sbd-muted", text: `+ ${list.length - 30} more — narrow with the filters` });
+	}
 }
 
 function renderList(el: HTMLElement, tasks: Task[], ctx: DashboardContext, f: TaskFilters): void {

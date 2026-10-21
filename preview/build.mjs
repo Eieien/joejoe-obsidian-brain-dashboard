@@ -16,7 +16,8 @@ function walk(dir, acc = []) {
 		const full = path.join(dir, entry.name);
 		if (entry.isDirectory()) walk(full, acc);
 		else if (/\.(png|jpe?g|gif|webp|svg)$/i.test(entry.name)) {
-			acc.push({ path: path.relative(VAULT, full).split(path.sep).join("/"), content: "", mtime: NOW, ctime: NOW });
+			// Embed images as base64 so the preview can read their bytes from file://.
+			acc.push({ path: path.relative(VAULT, full).split(path.sep).join("/"), content: fs.readFileSync(full).toString("base64"), mtime: NOW, ctime: NOW });
 		}
 		else if (entry.name.endsWith(".md")) {
 			const rel = path.relative(VAULT, full).split(path.sep).join("/");
@@ -43,6 +44,8 @@ await esbuild.build({
 	target: "es2020",
 	outfile: `${OUT}/preview.js`,
 	alias: { obsidian: "./preview/obsidian-shim.ts" },
+	// Node built-ins (secrets store) only run on desktop; the preview swaps in a fake store.
+	external: ["fs", "path", "os"],
 	define: { __VAULT__: JSON.stringify(vault) },
 	logLevel: "warning",
 });
@@ -81,7 +84,10 @@ fs.writeFileSync(`${OUT}/index.html`, `<!doctype html>
 <html><head><meta charset="utf-8"><title>joejoe's second brain · preview</title>
 <style>${themeVars}</style>
 <style>${fs.readFileSync("styles.css", "utf8")}</style>
+<style id="obs-theme" media="not all">${fs.readFileSync("theme/Joejoe Gallery/theme.css", "utf8")}
+body { --font-interface: var(--font-interface-theme); --font-text: var(--font-text-theme); font-family: var(--font-interface); }</style>
 </head><body><div id="leaf"></div>
+<script>window.onerror=(m,src,l,c,e)=>{document.body.setAttribute("data-error",m+" @"+l+":"+c+" "+(e&&e.stack||""))};window.onunhandledrejection=(ev)=>{document.body.setAttribute("data-error",String(ev.reason&&ev.reason.stack||ev.reason))};</script>
 <script>window.__SBD_DATA__ = ${data};</script>
 <script src="preview.js"></script>
 </body></html>`);

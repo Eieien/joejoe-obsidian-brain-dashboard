@@ -132,6 +132,8 @@ function renderMonth(el: HTMLElement, ctx: DashboardContext, st: CalendarState, 
 			head.createSpan({ cls: "sbd-month-num", text: String(Number(date.slice(8))) });
 			const list = items.get(date) ?? [];
 			const daily = list.find((i) => i.kind === "daily");
+			if (daily || list.some((i) => i.kind === "event" || i.kind === "created")) cell.addClass("has-note");
+			if (list.some((i) => i.kind === "due" || i.kind === "project" || i.kind === "deadline")) cell.addClass("has-due");
 			if (daily) {
 				const d = head.createSpan({ cls: "sbd-month-daily", attr: { "aria-label": "Open daily note" } });
 				setIcon(d, "notebook-pen");

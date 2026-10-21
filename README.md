@@ -81,6 +81,57 @@ It doesn't ask you to reorganize anything. It reads the notes, tasks and frontma
 - Every field visible at once: title, task or note, priority, due date (date field plus Today / Tomorrow / Next week), labels with an inline *new label* field, project, and where to save (today's note, Inbox, or the project's note).
 - Open it from the **capture** button, the command palette, or a hotkey you assign.
 
+### Inbox triage
+- Captured tasks (your Inbox file) and fleeting notes (the fleeting-notes folder) wait in one queue, with a count badge on the tab.
+- Work through them one at a time. For a task: set priority, due date, labels and project, then **move to the project**, **move to today's note**, mark **done**, or **delete**. For a fleeting note: **make it a permanent note** or a **literature note**, move it into a project folder, or delete it (to the system trash).
+
+### Notes: Zettelkasten tools
+- **Create** fleeting, literature (book / article / video / podcast, with author and link) and permanent notes from templates. Permanent notes can get a `YYYYMMDDHHmm` id.
+- **Orphans:** notes with no links in or out, each with **link suggestions** (shared tags, title words, neighbours and area) and one-click **+ link**, which adds it under `## Related`.
+- **Resurface:** a daily pick of older notes to re-read, with a "reviewed" button.
+- **Last opened note:** link ideas for it, and **split into atomic notes**, which turns each `## ` section into its own permanent note and leaves links behind.
+
+### Weekly review
+- Any week at a glance: tasks done, slipped tasks (move them all to tomorrow in one click), project progress, habits, notes written, inbox count and orphans.
+- A checklist (editable in settings) and reflections, saved per week. **Write review note** saves everything to `Reviews/2026-W43.md`.
+
+### Secrets vault
+A small password manager for API keys, tokens (PATs), logins and secure notes, so they never end up in a note or a repo.
+- **Encrypted at rest:** AES-256-GCM, with the key derived from one master password (PBKDF2-SHA256, 600,000 iterations, random salt, fresh nonce on every save). Only ciphertext is written; nothing goes into `data.json`, the index or the console.
+- **Kept outside your vault by default** (`%APPDATA%\joejoe-secrets\vault.enc` on Windows), so it never syncs or gets committed. If you move it into a git repository, the file is added to that repo's `.gitignore` and you'll see a warning.
+- **Two-pane manager:** search on the left (Enter copies the first match), details on the right. Values stay masked until you reveal them, fields are custom, and notes are encrypted too.
+- **Locks itself** after 5 idle minutes (configurable) and when Obsidian closes. **Copied secrets are cleared** from the clipboard after 30 seconds.
+- Saves are atomic (temp file, then rename), and the previous version is kept as `vault.enc.bak`. There is no password recovery.
+- Open it from the key icon in the ribbon or **Open secrets vault**. Desktop only.
+
+### Companion theme: Joejoe Gallery
+An Obsidian theme for the whole app (in `theme/Joejoe Gallery/`), not just the dashboard.
+- **Colors:** warm espresso in dark mode, parchment in light mode, and soft gold accents.
+- **Type:** serif titles and headings (Iowan Old Style / Palatino / Georgia) over an Inter / Segoe UI body. Headings 4–6 and table headers are small spaced-out uppercase labels.
+- **Panels:** rounded modals, menus, callouts and buttons with thin edges, and quieter sidebars and tabs.
+- **Install:** `npm run deploy -- "<vault>"` installs it next to the plugin. Then pick **Joejoe Gallery** under *Settings → Appearance → Themes*.
+
+### Split-panel cover
+The Home header is a dark band with your cover image split into five black-and-white panels. With no image set, it draws a black-and-white mountain landscape. Hover the band to change the image, reposition it, or switch to a single full-width image.
+
+### Pixel effects
+Ordered (Bayer) dithering in the 1-bit, pixel-art spirit of the dashboard, each one toggleable:
+- **Pixel field:** an animated dithered plasma widget. Move the mouse to light it up, and click to send out ripples.
+- **Dissolve transitions:** switching tabs reveals the page through a quick pixel dissolve.
+- **In your notes:** a `dither` code block shows a dithered image (with the hover reveal) or a pixel field anywhere in your vault:
+
+  ````markdown
+  ```dither
+  src: Attachments/photo.png
+  palette: gameboy
+  pixel: 3
+  height: 240
+  ```
+  ````
+  Leave out `src` to get a pixel field instead. Palettes: `theme` (your theme's ink on its background), `gameboy`, `amber`, `ice` and `rose`.
+
+Pixel size and palette are set under *Settings → Appearance → Pixel effects* or in **customize page**. Animation pauses when your system asks for reduced motion.
+
 ### Details
 - Follows your Obsidian theme in light and dark. The default *mono* style gives a Notion-like monospace page; switch to *theme native* if you prefer your theme's fonts.
 - Transitions respond to what you do (switching tabs, dragging, ticking, opening popups), and all motion turns off if your system asks for reduced motion.
@@ -197,12 +248,13 @@ You never have to type these yourself; ticking a box on the dashboard writes the
 | Section | What you can set |
 |---|---|
 | General | Open the dashboard on startup, default task view, week start, excluded folders |
-| Appearance | Style (mono or theme native), dark mode surfaces (theme default, darker, plain or black), page title, icon, cover image, quotes, which widgets show, countdown target |
+| Appearance | Style (mono or theme native), dark mode surfaces (theme default, darker, plain or black), pixel effects (pixel field, dissolve transitions, pixel size, palette), page title, icon, cover image, quotes, which widgets show, countdown target |
 | Quick links | Label, icon, color and target for each link (or leave empty to use your top-level folders) |
 | Projects | Project folder, tag and frontmatter field |
 | Daily notes & capture | Use the core Daily Notes settings, daily folder and date format, inbox file, where quick capture saves |
 | Tasks | Auto-urgent window, deadline window, status characters |
 | Labels | Names and colors |
+| Secrets vault | File location (default outside the vault), auto-lock minutes, clipboard clear seconds |
 
 Most appearance options can also be changed straight from the dashboard (hover the page header or use **customize page**).
 
@@ -213,9 +265,11 @@ Most appearance options can also be changed straight from the dashboard (hover t
 | Command | |
 |---|---|
 | Open dashboard | Opens Home |
-| Open tasks board / calendar / projects / trackers / library (A–Z) | Opens that tab |
+| Open inbox / tasks board / calendar / projects / notes / trackers / weekly review / library (A–Z) | Opens that tab |
+| New fleeting / literature / permanent note | Creates a note from the template |
 | Quick capture | Opens the capture window from anywhere |
 | Rebuild index | Re-reads the whole vault |
+| Open secrets vault / Lock secrets vault | Opens the encrypted secrets manager, or locks it right away |
 
 Assign hotkeys under **Settings → Hotkeys** (search "joejoe").
 
@@ -227,7 +281,7 @@ Requires Node 18+.
 
 ```bash
 npm install
-npm run dev        # rebuild on change (pair with the Hot Reload plugin)
+npm run dev -- "/path/to/YourVault"   # rebuild + copy into the vault on every save; the plugin reloads itself
 npm run build      # type-check + production bundle → main.js
 npm test           # unit tests for task parsing, board files, stats, calendar logic
 npm run deploy -- "/path/to/YourVault"   # copy main.js, manifest.json, styles.css into the vault
@@ -243,6 +297,9 @@ node preview/screenshot.mjs shots home=home "cal=calendar&day=1" "habits=tracker
 ```
 
 URL hash options: the tab name (`home`, `tasks`, `calendar`, `projects`, `trackers`, `library`), `theme=light`, `mode=week|timeline`, `project=<path>`, `focus=<habit key>`, `capture=1`, `day=1`, `drag=1`.
+
+### Auto-reload while developing
+With **Settings → Development → Auto-reload on update** on (the default), the plugin watches its own `main.js`, `styles.css` and `manifest.json`. When they change, for example after `npm run deploy` or during `npm run dev -- "<vault>"`, it reloads itself within a couple of seconds, with no Obsidian restart.
 
 ### Releasing
 
@@ -268,14 +325,22 @@ src/
     kanbanBoard.ts     read/edit Kanban plugin board files (pure, tested)
     trackerTypes.ts    tracker definitions and statistics (pure, tested)
     trackerStore.ts    read and write tracker entries and habit checks
+    graph.ts           orphans, link suggestions, resurfacing, splitting (pure, tested)
     daily.ts           daily-note config, create, append
   view/
     DashboardView.ts   the full-page view and tab routing
     homeTab.ts  tasksTab.ts  kanban.ts  calendarTab.ts  dayModal.ts
     projectsTab.ts  trackersTab.ts  habits.ts  libraryTab.ts
     CaptureModal.ts  widgets.ts  homeEdit.ts  pickers.ts  labels.ts
-    charts.ts  components.ts  trackerModals.ts
+    inboxTab.ts  notesTab.ts  reviewTab.ts
+    charts.ts  components.ts  trackerModals.ts  dither.ts
+  secrets/
+    crypto.ts          AES-GCM + PBKDF2 envelope, entry helpers (pure, tested)
+    store.ts           encrypted file I/O, unlock session, auto-lock, clipboard clear (tested)
+    SecretsModal.ts    setup / lock screen and the two-pane manager
+  devReload.ts         reloads the plugin when its files change
 styles.css             all styling (theme variables, light and dark)
+theme/Joejoe Gallery/  companion Obsidian theme (theme.css + manifest.json)
 preview/               browser preview + screenshot script
 test/                  unit tests
 demo-vault/            sample vault
@@ -288,10 +353,11 @@ demo-vault/            sample vault
 - [x] Core dashboard, Kanban plugin board + task list, priorities and labels, projects, quick capture
 - [x] Calendar (month/week/timeline) and the day popup
 - [x] Habits with statistics, other trackers, the A–Z library
-- [ ] Inbox triage and Zettelkasten tools (fleeting → literature → permanent notes, orphans, resurfacing)
-- [ ] Weekly review page
-- [ ] Eisenhower matrix view and saved filters
-- [ ] Optional calendar sync and "ask my notes"
+- [x] Inbox triage and Zettelkasten tools (fleeting → literature → permanent notes, orphans, link suggestions, resurfacing, splitting)
+- [x] Weekly review page
+- [x] Eisenhower matrix view and saved filters
+- [x] Auto-reload during development
+- [ ] Optional calendar sync and "ask my notes" (these need outside accounts or API keys)
 
 ---
 

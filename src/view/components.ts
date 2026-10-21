@@ -20,6 +20,8 @@ export interface DashboardContext {
 	rerender: () => void;
 	/** Intervals are cleared automatically before the next render. */
 	addInterval: (id: number) => void;
+	/** Run when the view re-renders or closes (stop animations, observers…). */
+	addCleanup: (fn: () => void) => void;
 }
 
 /** Stable color per name (color follows the entity, not its position). */

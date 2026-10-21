@@ -1,6 +1,7 @@
 import { App, moment, Notice, TFile } from "obsidian";
 import type { DashboardSettings } from "../settings";
 import type { Priority, Task, TaskStatus } from "../types";
+import { appendToFile } from "./daily";
 import { addLabel, removeLabel, setDoneDate, setDue, setPriority, setStatusChar } from "./taskParser";
 
 export interface TaskChange {
@@ -60,7 +61,22 @@ export class TaskWriter {
 		await this.edit(task, (line) => (has ? removeLabel(line, label) : addLabel(line, label)));
 	}
 
-	private async edit(task: Task, mutate: (line: string) => string): Promise<void> {
+	/** Move a task line to the end of another note (removed from its current note first). */
+	async moveTo(task: Task, targetPath: string, transform: (line: string) => string = (l) => l): Promise<boolean> {
+		let moved: string | null = null;
+		await this.edit(task, (line) => { moved = line; return null; });
+		if (moved === null) return false;
+		await appendToFile(this.app, targetPath, transform((moved as string).replace(/^\s+/, "")));
+		return true;
+	}
+
+	/** Delete a task line. */
+	async remove(task: Task): Promise<void> {
+		await this.edit(task, () => null);
+	}
+
+	/** Rewrite one task line; returning null from `mutate` deletes the line. */
+	private async edit(task: Task, mutate: (line: string) => string | null): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(task.path);
 		if (!(file instanceof TFile)) {
 			new Notice(`Second brain: ${task.path} no longer exists.`);
@@ -78,7 +94,9 @@ export class TaskWriter {
 				idx = candidates.reduce((a, b) => (Math.abs(b - task.line) < Math.abs(a - task.line) ? b : a));
 			}
 			const cr = lines[idx].endsWith("\r") ? "\r" : "";
-			lines[idx] = mutate(strip(lines[idx])) + cr;
+			const next = mutate(strip(lines[idx]));
+			if (next === null) lines.splice(idx, 1);
+			else lines[idx] = next + cr;
 			return lines.join("\n");
 		});
 		if (!ok) new Notice("Second brain: that task changed in the note since the dashboard loaded. Refreshing.");

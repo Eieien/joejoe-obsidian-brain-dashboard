@@ -4,7 +4,10 @@ import { deadlines } from "../data/queries";
 import { PILL_COLORS, type HomeImage, type QuickLink } from "../settings";
 import type { DashboardContext } from "./components";
 import { HomeLayoutModal, QuickLinksModal, QuoteModal } from "./homeEdit";
+import { pixelField } from "./dither";
 import { IconPickerModal, imageSrc, ImagePickerModal, isImagePath } from "./pickers";
+import { landscapeCover } from "./cover";
+import { applyCoverView, coverToolbar, coverView } from "./coverControls";
 
 async function saveUi(ctx: DashboardContext): Promise<void> {
 	await ctx.plugin.persist();
@@ -24,47 +27,29 @@ function hoverButton(parent: HTMLElement, icon: string, label: string, onClick: 
 export function pageHeader(parent: HTMLElement, ctx: DashboardContext): void {
 	const a = ctx.plugin.settings.appearance;
 	const top = parent.createDiv({ cls: "sbd-page-top" });
+	const style = a.coverStyle ?? "panels";
+	const hero = style === "hero" && !!a.banner;
+	const panels = style === "panels";
 
-	if (a.banner) {
+	if (hero) heroCover(top, ctx);
+	else if (panels) galleryCover(top, ctx);
+	else if (a.banner) {
 		const banner = top.createDiv({ cls: "sbd-banner" });
 		const src = imageSrc(ctx.app, a.banner);
+		let layer: HTMLElement | undefined;
 		if (src) {
-			banner.style.backgroundImage = `url("${src}")`;
-			banner.style.backgroundPosition = `center ${a.bannerPosition ?? 50}%`;
+			layer = banner.createDiv({ cls: "sbd-cover-layer" });
+			layer.style.backgroundImage = `url("${src}")`;
+			applyCoverView(layer, coverView(a), "background");
 		} else banner.addClass("is-missing");
-		const controls = banner.createDiv({ cls: "sbd-banner-controls" });
-		hoverButton(controls, "image", "change cover", () => new ImagePickerModal(ctx.app, {
-			title: "Cover image",
-			onPick: (s) => { a.banner = s; a.bannerPosition = 50; void saveUi(ctx); },
-			onRemove: () => { a.banner = ""; void saveUi(ctx); },
-		}).open());
-		const repo = hoverButton(controls, "move-vertical", "reposition", () => {
-			if (banner.hasClass("is-repositioning")) { void saveUi(ctx); return; }
-			banner.addClass("is-repositioning");
-			repo.lastElementChild!.setText("save position");
-			let pos = a.bannerPosition ?? 50;
-			banner.onpointerdown = (down) => {
-				const startY = down.clientY, startPos = pos;
-				const move = (e: PointerEvent) => {
-					pos = Math.max(0, Math.min(100, startPos - ((e.clientY - startY) / banner.clientHeight) * 100));
-					banner.style.backgroundPosition = `center ${pos}%`;
-					a.bannerPosition = Math.round(pos);
-				};
-				const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
-				window.addEventListener("pointermove", move);
-				window.addEventListener("pointerup", up);
-			};
-		});
-		hoverButton(controls, "trash-2", "remove", () => { a.banner = ""; void saveUi(ctx); });
+		coverToolbar(banner, ctx, layer ? { surface: banner, layer, mode: "background" } : undefined);
 	}
 
-	const head = top.createDiv({ cls: `sbd-page-head ${a.banner ? "has-banner" : ""} ${a.icon ? "" : "no-icon"}` });
+	const head = top.createDiv({ cls: `sbd-page-head ${hero ? "has-hero" : panels ? "has-panels" : a.banner ? "has-banner" : ""} ${a.icon ? "" : "no-icon"}` });
 	const bar = head.createDiv({ cls: "sbd-head-controls" });
 	const pickIcon = () => new IconPickerModal(ctx.app, (icon) => { a.icon = icon; void saveUi(ctx); }, a.icon ? () => { a.icon = ""; void saveUi(ctx); } : undefined).open();
 	if (!a.icon) hoverButton(bar, "smile-plus", "add icon", pickIcon);
-	if (!a.banner) hoverButton(bar, "image", "add cover", () => new ImagePickerModal(ctx.app, {
-		title: "Cover image", onPick: (s) => { a.banner = s; a.bannerPosition = 50; void saveUi(ctx); },
-	}).open());
+	if (!hero && !panels && !a.banner) coverToolbar(bar, ctx).addClass("is-inline");
 	if (!a.showQuote) hoverButton(bar, "quote", "add quote", () => { a.showQuote = true; void saveUi(ctx); });
 	hoverButton(bar, "layout-template", "customize page", () => new HomeLayoutModal(ctx.app, ctx.plugin, () => ctx.rerender()).open());
 
@@ -97,6 +82,44 @@ export function pageHeader(parent: HTMLElement, ctx: DashboardContext): void {
 		setIcon(edit, "pencil");
 		edit.onclick = () => new QuoteModal(ctx.app, ctx.plugin, () => ctx.rerender()).open();
 	}
+}
+
+/**
+ * Blended hero: the cover sits on the right of the content column with its black
+ * background screened away, so only the lit parts of the image float on the page.
+ * The title block (rendered next) overlaps the empty dark area on the left.
+ */
+function heroCover(top: HTMLElement, ctx: DashboardContext): void {
+	const a = ctx.plugin.settings.appearance;
+	const band = top.createDiv({ cls: "sbd-hero" });
+	const frame = band.createDiv({ cls: "sbd-hero-frame" });
+	const src = imageSrc(ctx.app, a.banner);
+	if (src) {
+		const img = frame.createEl("img", { cls: "sbd-hero-img", attr: { src, alt: "", draggable: "false" } });
+		const view = coverView(a);
+		applyCoverView(img, view, "object");
+		img.addEventListener("load", () => { band.addClass("is-loaded"); applyCoverView(img, view, "object"); }, { once: true });
+		if (img.complete) band.addClass("is-loaded");
+	}
+	const img = frame.querySelector<HTMLImageElement>("img");
+	coverToolbar(band, ctx, img ? { surface: band, layer: img, mode: "object" } : undefined);
+}
+
+/**
+ * Split-panel cover: a dark band holding one black-and-white image cut into five
+ * panels by gaps in the band colour. Uses the chosen cover, else a drawn landscape.
+ */
+function galleryCover(top: HTMLElement, ctx: DashboardContext): void {
+	const a = ctx.plugin.settings.appearance;
+	const band = top.createDiv({ cls: "sbd-gallery-band" });
+	const strip = band.createDiv({ cls: "sbd-panels" });
+	const src = a.banner ? imageSrc(ctx.app, a.banner) : null;
+	const layer = strip.createDiv({ cls: "sbd-cover-layer" });
+	layer.style.backgroundImage = `url("${src ?? landscapeCover()}")`;
+	applyCoverView(layer, coverView(a), "background");
+	for (let i = 1; i < 5; i++) strip.createDiv({ cls: "sbd-panel-gap", attr: { style: `left: ${i * 20}%` } });
+
+	coverToolbar(band, ctx, { surface: strip, layer, mode: "background" });
 }
 
 function pageIcon(el: HTMLElement, ctx: DashboardContext, icon: string): void {
@@ -246,6 +269,15 @@ export function flipClock(parent: HTMLElement, ctx: DashboardContext): void {
 	ctx.addInterval(window.setInterval(tick, 10_000));
 }
 
+// ---------- Pixel field (just for fun) ----------
+
+export function pixelFieldTile(parent: HTMLElement, ctx: DashboardContext): void {
+	const px = ctx.plugin.settings.appearance.pixel;
+	const tile = parent.createDiv({ cls: "sbd-widget sbd-pixel-field", attr: { "aria-label": "Pixel field — move to light it, click for ripples" } });
+	ctx.addCleanup(pixelField(tile, { palette: px.palette, pixel: px.size }));
+	tile.createDiv({ cls: "sbd-pixel-field-label", text: "move · click" });
+}
+
 // ---------- Images (just for fun) ----------
 
 export function imageTiles(parent: HTMLElement, ctx: DashboardContext): void {
@@ -298,7 +330,7 @@ export function miniCalendar(parent: HTMLElement, ctx: DashboardContext): void {
 	const weeks = monthGrid(month.year(), month.month(), s.weekStartsMonday);
 	const idx = ctx.plugin.index;
 	const items = calendarItems(idx.tasks, [...idx.notes.values()], [...idx.projects.values()],
-		weeks[0][0], weeks[weeks.length - 1][6], new Set(["due", "project", "deadline", "event"]));
+		weeks[0][0], weeks[weeks.length - 1][6], new Set(["due", "scheduled", "project", "deadline", "event", "daily", "created"]));
 	const grid = box.createDiv({ cls: "sbd-minical-grid" });
 	const dow = s.weekStartsMonday ? ["M", "T", "W", "T", "F", "S", "S"] : ["S", "M", "T", "W", "T", "F", "S"];
 	for (const d of dow) grid.createDiv({ cls: "sbd-minical-dow", text: d });
@@ -307,9 +339,17 @@ export function miniCalendar(parent: HTMLElement, ctx: DashboardContext): void {
 			const cell = grid.createDiv({ cls: "sbd-minical-day", text: String(Number(date.slice(8))) });
 			if (date.slice(0, 7) !== month.format("YYYY-MM")) cell.addClass("is-out");
 			if (date === ctx.today) cell.addClass("is-today");
-			const n = items.get(date)?.length ?? 0;
-			if (n) { cell.addClass("has-items"); cell.setAttr("aria-label", `${n} item${n > 1 ? "s" : ""}`); }
+			const list = items.get(date) ?? [];
+			const due = list.filter((i) => i.kind === "due" || i.kind === "scheduled" || i.kind === "project" || i.kind === "deadline").length;
+			const notes = list.filter((i) => i.kind === "daily" || i.kind === "created" || i.kind === "event").length;
+			if (due) cell.addClass("has-items");
+			if (notes) cell.addClass("has-notes");
+			const parts = [due ? `${due} due` : "", notes ? `${notes} note${notes > 1 ? "s" : ""}` : ""].filter(Boolean);
+			if (parts.length) cell.setAttr("aria-label", parts.join(" · "));
 			cell.onclick = () => ctx.openCalendarDay(date);
 		}
 	}
+	const legend = box.createDiv({ cls: "sbd-minical-legend" });
+	legend.createSpan({ cls: "is-due", text: "due" });
+	legend.createSpan({ cls: "is-note", text: "notes" });
 }
