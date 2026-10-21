@@ -108,6 +108,17 @@ export function card(parent: HTMLElement, title: string, opts: { icon?: string; 
 }
 
 /** One task: checkbox, text, metadata chips. Click opens the note; right-click or ⋯ for the menu. */
+/** Remove a project/course name (or its note's file name) from task text, e.g. a trailing [[link]]. */
+export function withoutName(text: string, p: { name: string; notePath?: string }): string {
+	const names = [p.name, p.notePath?.split("/").pop()?.replace(/\.md$/, "")].filter((n): n is string => !!n);
+	let out = text;
+	for (const n of names) {
+		const esc = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		out = out.replace(new RegExp(`\\s*[|·–—-]?\\s*${esc}\\s*$`, "i"), "").replace(new RegExp(`\\s+${esc}(?=\\s)`, "i"), "");
+	}
+	return out.trim();
+}
+
 export function renderTask(parent: HTMLElement, task: Task, ctx: DashboardContext, opts: { showProject?: boolean; draggable?: boolean; showStatus?: boolean } = {}): HTMLElement {
 	const writer = ctx.plugin.writer;
 	const row = parent.createDiv({ cls: `sbd-task sbd-status-${task.status}` });
@@ -123,7 +134,16 @@ export function renderTask(parent: HTMLElement, task: Task, ctx: DashboardContex
 	};
 
 	const main = row.createDiv({ cls: "sbd-task-main" });
-	const text = main.createDiv({ cls: "sbd-task-text", text: task.text || "(empty task)" });
+	// The project / course link is shown separately, so drop its name from the title text.
+	const proj = task.project ? ctx.plugin.index.projects.get(task.project) : undefined;
+	const title = (proj ? withoutName(task.text, proj) : task.text) || task.text || "(empty task)";
+	const text = main.createDiv({ cls: "sbd-task-text" });
+	text.createSpan({ cls: "sbd-task-title", text: title });
+	if (proj?.kind === "course" && opts.showProject !== false) {
+		text.createSpan({ cls: "sbd-task-sep", text: "|", attr: { "aria-hidden": "true" } });
+		const cn = text.createSpan({ cls: `sbd-task-course sbd-c-${proj.color ?? "indigo"}`, text: proj.name, attr: { title: `Open ${proj.name}${proj.active === false ? " (inactive)" : ""}` } });
+		cn.onclick = (e) => { e.stopPropagation(); ctx.openProject(proj.key); };
+	}
 	text.onclick = (e) => ctx.openPath(task.path, task.line, e.ctrlKey || e.metaKey);
 
 	const meta = main.createDiv({ cls: "sbd-task-meta" });
@@ -135,8 +155,7 @@ export function renderTask(parent: HTMLElement, task: Task, ctx: DashboardContex
 	if (opts.showProject !== false && task.project) {
 		const p = ctx.plugin.index.projects.get(task.project);
 		if (p?.kind === "course") {
-			const chip = meta.createSpan({ cls: `sbd-course-chip sbd-c-${p.color ?? "indigo"}`, text: p.code || p.name, attr: { title: p.name + (p.active === false ? " (inactive)" : "") } });
-			chip.onclick = (e) => { e.stopPropagation(); ctx.openProject(p.key); };
+			// Shown in the title as "task | Course name".
 		} else if (p) {
 			const chip = meta.createSpan({ cls: "sbd-project-chip", text: p.name });
 			chip.onclick = (e) => { e.stopPropagation(); ctx.openProject(p.key); };

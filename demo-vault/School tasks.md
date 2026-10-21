@@ -1,0 +1,2 @@
+- [ ] Reverse String GUI [[Discrete Mathematics]] 📅 2026-10-22 #quick-win
+- [ ] Build a heap visualizer [[Data Structures and Algorithms]] 📅 2026-10-23

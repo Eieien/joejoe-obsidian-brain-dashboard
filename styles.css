@@ -2353,3 +2353,9 @@ button.sbd-course-switch { background-color: var(--sbd-card-hover); box-shadow: 
 button.sbd-course-switch.is-on { background-color: var(--c, var(--c-emerald)); box-shadow: none; }
 .sbd-course-modal button.sbd-course-switch.is-on { background-color: var(--c-emerald); }
 button.sbd-money-cat-icon { background-color: var(--c-bg, var(--sbd-card-hover)); color: var(--c, var(--sbd-ink-2)); }
+
+/* task | Course name */
+.sbd-task-sep { margin: 0 8px; color: var(--sbd-ink-3); font-weight: 400; }
+.sbd-task-course { color: var(--c); font-weight: 500; cursor: pointer; text-decoration: none; }
+.sbd-task-course:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sbd-status-done .sbd-task-sep, .sbd-status-done .sbd-task-course { opacity: .7; }
