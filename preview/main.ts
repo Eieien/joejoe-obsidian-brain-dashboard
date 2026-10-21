@@ -6,6 +6,7 @@ import { CaptureModal } from "../src/view/CaptureModal";
 import { DashboardView } from "../src/view/DashboardView";
 import { SecretsModal } from "../src/secrets/SecretsModal";
 import { CategoryModal, MoneySettingsModal } from "../src/view/moneyView";
+import { CourseModal } from "../src/view/coursesTab";
 import { newEntry, type SecretEntry } from "../src/secrets/crypto";
 
 declare const __VAULT__: { path: string; content: string; mtime: number; ctime: number }[];
@@ -39,6 +40,7 @@ async function boot(): Promise<void> {
 	if (params.get("view")) patch.tasks = { view: params.get("view") };
 	if (params.get("lib")) patch.library = { view: params.get("lib") };
 	if (params.get("project")) patch.projects = { selected: params.get("project") };
+	if (params.get("course")) patch.courses = { selected: params.get("course") };
 	if (params.get("focus")) patch.trackers = { focus: params.get("focus") };
 	view.navigate(tab, patch as never);
 	if (params.get("drag")) window.setTimeout(simulateDrag, 100);
@@ -74,6 +76,7 @@ async function boot(): Promise<void> {
 		}, 200);
 		if (params.get("coverui") === "repo") [...document.querySelectorAll<HTMLElement>(".sbd-cover-btn")].find((b) => b.textContent === "Reposition")?.click();
 	}, 80);
+	if (params.get("newcourse")) new CourseModal(app as never, plugin, undefined, () => undefined).open();
 	if (params.get("moneysettings")) new MoneySettingsModal(app as never, plugin, () => undefined).open();
 	if (params.get("moneycat")) new CategoryModal(app as never, plugin, plugin.settings.money.categories[0], () => undefined).open();
 	if (params.get("day")) window.setTimeout(() => document.querySelector<HTMLElement>(".sbd-month-cell.is-today")?.click(), 50);

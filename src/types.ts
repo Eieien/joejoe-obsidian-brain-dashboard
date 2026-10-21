@@ -56,6 +56,18 @@ export interface ProjectInfo {
 	area?: string;
 	/** Frontmatter `description:` (Markdown). */
 	description?: string;
+	/** "course" for school subjects (see the Courses tab); projects otherwise. */
+	kind?: "project" | "course";
+	/** Course details (frontmatter): code, instructor, schedule, room, units, term, colour. */
+	code?: string;
+	instructor?: string;
+	schedule?: string;
+	room?: string;
+	units?: string;
+	term?: string;
+	color?: string;
+	/** Courses only: taking it this semester (frontmatter `active:`; defaults to true). */
+	active?: boolean;
 }
 
 export type NoteKind = "daily" | "project" | "note";

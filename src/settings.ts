@@ -186,6 +186,13 @@ export interface DashboardSettings {
 	secrets: SecretsSettings;
 	/** Money tracker: ledger folder, currency, budgets and categories. */
 	money: MoneySettings;
+	/** Courses (school subjects): notes in this folder, tagged with courseTag, or with `type: course`. */
+	courseFolder: string;
+	courseTag: string;
+	/** The current semester's name, e.g. "1st Sem 2026–27" (pre-filled on new courses). */
+	currentTerm: string;
+	/** Hide tasks of inactive courses from Home, Tasks, Calendar and Review. */
+	hideInactiveCourseTasks: boolean;
 }
 
 export const DEFAULT_SETTINGS: DashboardSettings = {
@@ -267,6 +274,10 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
 	savedViews: [],
 	autoReload: true,
 	secrets: DEFAULT_SECRETS,
+	courseFolder: "Courses",
+	courseTag: "course",
+	currentTerm: "",
+	hideInactiveCourseTasks: true,
 	money: { folder: "Finance/Ledger", currency: "PHP", monthlyBudget: 0, dailyBudget: 0, weeklyBudget: 0, categories: DEFAULT_MONEY_CATEGORIES },
 };
 
@@ -421,6 +432,16 @@ export class DashboardSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("Development").setHeading();
 		new Setting(containerEl).setName("Auto-reload on update").setDesc("Reload this plugin by itself when its files change, e.g. after `npm run deploy` or `npm run dev`.")
 			.addToggle((t) => t.setValue(s.autoReload).onChange(async (v) => { s.autoReload = v; await save(); }));
+
+		new Setting(containerEl).setName("Courses (school)").setHeading();
+		new Setting(containerEl).setName("Course folder").setDesc("Notes here (or tagged, or with type: course) are courses.")
+			.addText((t) => t.setPlaceholder("Courses").setValue(s.courseFolder).onChange(async (v) => { s.courseFolder = v.trim(); await save(); }));
+		new Setting(containerEl).setName("Course tag").setDesc("Notes with this tag are courses.")
+			.addText((t) => t.setPlaceholder("course").setValue(s.courseTag).onChange(async (v) => { s.courseTag = v.trim().replace(/^#/, ""); await save(); }));
+		new Setting(containerEl).setName("Current semester").setDesc("Pre-filled on new courses, shown on the Courses tab.")
+			.addText((t) => t.setPlaceholder("1st Sem 2026–27").setValue(s.currentTerm).onChange(async (v) => { s.currentTerm = v.trim(); await this.plugin.persist(); }));
+		new Setting(containerEl).setName("Hide tasks of inactive courses").setDesc("Leave them out of Home, Tasks, the Calendar and Review. They're always visible on the course page.")
+			.addToggle((t) => t.setValue(s.hideInactiveCourseTasks).onChange(async (v) => { s.hideInactiveCourseTasks = v; await this.plugin.persist(); }));
 
 		new Setting(containerEl).setName("Secrets vault").setHeading();
 		if (!secretsSupported()) {

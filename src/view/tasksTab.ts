@@ -31,7 +31,8 @@ export function filterTasks(tasks: Task[], f: TaskFilters, ctx: DashboardContext
 		if (f.priority && t.priority !== Number(f.priority)) return false;
 		if (f.label && !t.labels.includes(f.label)) return false;
 		if (f.project === "__none" && t.project) return false;
-		if (f.project && f.project !== "__none" && t.project !== f.project) return false;
+		if (f.project === "__courses") { if (!t.project || ctx.plugin.index.projects.get(t.project)?.kind !== "course") return false; }
+		else if (f.project && f.project !== "__none" && t.project !== f.project) return false;
 		switch (f.due) {
 			case "overdue": if (!isOverdue(t, ctx.today)) return false; break;
 			case "today": if (!isDueToday(t, ctx.today)) return false; break;
@@ -66,8 +67,20 @@ export function renderTasksTab(el: HTMLElement, ctx: DashboardContext, f: TaskFi
 	let t: number | undefined;
 	search.oninput = () => { window.clearTimeout(t); t = window.setTimeout(() => update({ search: search.value }), 200); };
 
-	const projects = [...index.projects.values()].sort((a, b) => a.name.localeCompare(b.name));
-	select(toolbar, "Project", f.project, [["", "All projects"], ["__none", "No project"], ...projects.map((p) => [p.key, p.name] as [string, string])], (v) => update({ project: v }));
+	const projects = index.projectList().sort((a, b) => a.name.localeCompare(b.name));
+	const courses = index.courseList();
+	const hideInactive = ctx.plugin.settings.hideInactiveCourseTasks;
+	select(toolbar, "Project or course", f.project, [
+		["", "All projects & courses"], ["__none", "No project or course"], ["__courses", "All active courses"],
+		...courses.filter((c) => !hideInactive || c.active !== false || f.project === c.key).map((c) => [c.key, `Course · ${c.code ? `${c.code} — ` : ""}${c.name}${c.active === false ? " (inactive)" : ""}`] as [string, string]),
+		...projects.map((p) => [p.key, `Project · ${p.name}`] as [string, string]),
+	], (v) => update({ project: v }));
+	if (courses.some((c) => c.active === false)) {
+		const t = toolbar.createEl("button", { cls: "sbd-ghost-btn sbd-inactive-toggle" + (hideInactive ? "" : " is-active"), attr: { "aria-pressed": String(!hideInactive), title: "Tasks from courses you're not taking this semester" } });
+		setIcon(t.createSpan({ cls: "sbd-icon" }), hideInactive ? "eye-off" : "eye");
+		t.createSpan({ text: hideInactive ? "Inactive courses hidden" : "Showing inactive courses" });
+		t.onclick = async () => { ctx.plugin.settings.hideInactiveCourseTasks = !hideInactive; await ctx.plugin.persist(); ctx.rerender(); };
+	}
 	select(toolbar, "Due", f.due, [["any", "Any date"], ["urgent", "Urgent"], ["overdue", "Overdue"], ["today", "Due today"], ["week", "Next 7 days"], ["none", "No date"]], (v) => update({ due: v as TaskFilters["due"] }));
 	select(toolbar, "Priority", f.priority, [["", "Any priority"], ...([1, 2, 3, 4] as Priority[]).map((p) => [String(p), PRIORITY_LABELS[p]] as [string, string])], (v) => update({ priority: v as TaskFilters["priority"] }));
 	const allLabels = new Set([...ctx.plugin.settings.labels.map((l) => l.name), ...index.tasks.flatMap((t) => t.labels)]);
@@ -123,7 +136,9 @@ export function renderTasksTab(el: HTMLElement, ctx: DashboardContext, f: TaskFi
 	addBtn.createSpan({ text: "Task" });
 	addBtn.onclick = () => new CaptureModal(ctx.app, ctx.plugin, { project: f.project && f.project !== "__none" ? f.project : undefined }).open();
 
-	const filtered = filterTasks(index.tasks, f, ctx);
+	// Picking one course shows its tasks even when it is inactive.
+	const picked = f.project ? index.projects.get(f.project) : undefined;
+	const filtered = filterTasks(picked?.kind === "course" ? index.allTasks : index.tasks, f, ctx);
 	if (f.view === "matrix") renderMatrix(el, filtered, ctx, f);
 	else renderList(el, filtered, ctx, f);
 }
@@ -171,7 +186,7 @@ function renderList(el: HTMLElement, tasks: Task[], ctx: DashboardContext, f: Ta
 			case "status": return STATUS_LABELS[t.status];
 			case "priority": return PRIORITY_LABELS[t.priority];
 			case "due": return isOpen(t) ? dueBucket(t, ctx.today) : "Closed";
-			case "project": return t.project ? ctx.plugin.index.projects.get(t.project)?.name ?? "No project" : "No project";
+			case "project": { const pr = t.project ? ctx.plugin.index.projects.get(t.project) : undefined; return pr ? (pr.kind === "course" ? `Course · ${pr.code ?? pr.name}` : pr.name) : "No project"; }
 		}
 	};
 	for (const t of visible) {

@@ -134,7 +134,10 @@ export function renderTask(parent: HTMLElement, task: Task, ctx: DashboardContex
 	for (const l of task.labels) labelChip(meta, ctx, l);
 	if (opts.showProject !== false && task.project) {
 		const p = ctx.plugin.index.projects.get(task.project);
-		if (p) {
+		if (p?.kind === "course") {
+			const chip = meta.createSpan({ cls: `sbd-course-chip sbd-c-${p.color ?? "indigo"}`, text: p.code || p.name, attr: { title: p.name + (p.active === false ? " (inactive)" : "") } });
+			chip.onclick = (e) => { e.stopPropagation(); ctx.openProject(p.key); };
+		} else if (p) {
 			const chip = meta.createSpan({ cls: "sbd-project-chip", text: p.name });
 			chip.onclick = (e) => { e.stopPropagation(); ctx.openProject(p.key); };
 		}

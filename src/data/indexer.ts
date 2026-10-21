@@ -24,14 +24,34 @@ export class VaultIndex extends Events {
 		super();
 	}
 
-	get tasks(): Task[] {
+	/** Every task in the vault, including those of inactive courses. */
+	get allTasks(): Task[] {
 		const all: Task[] = [];
 		for (const list of this.tasksByFile.values()) all.push(...list);
 		return all;
 	}
 
+	/** Tasks shown across the dashboard: inactive courses' tasks are left out (setting). */
+	get tasks(): Task[] {
+		const all = this.allTasks;
+		if (!this.getSettings().hideInactiveCourseTasks) return all;
+		const hidden = new Set([...this.projects.values()].filter((p) => p.kind === "course" && p.active === false).map((p) => p.key));
+		return hidden.size ? all.filter((t) => !t.project || !hidden.has(t.project)) : all;
+	}
+
 	tasksForProject(key: string): Task[] {
-		return this.tasks.filter((t) => t.project === key);
+		return this.allTasks.filter((t) => t.project === key);
+	}
+
+	/** Projects proper (not courses). */
+	projectList(): ProjectInfo[] {
+		return [...this.projects.values()].filter((p) => p.kind !== "course");
+	}
+
+	/** School courses, active first, then by code / name. */
+	courseList(): ProjectInfo[] {
+		return [...this.projects.values()].filter((p) => p.kind === "course")
+			.sort((a, b) => Number(b.active !== false) - Number(a.active !== false) || (a.code ?? a.name).localeCompare(b.code ?? b.name));
 	}
 
 	/** The date of the daily note at `path`, if it is one. */
@@ -122,6 +142,7 @@ export class VaultIndex extends Events {
 		const s = this.getSettings();
 		const dailyCfg = getDailyConfig(this.app, s);
 		const projectFolder = s.projectFolder.replace(/^\/|\/$/g, "");
+		const courseFolder = (s.courseFolder ?? "").replace(/^\/|\/$/g, "");
 		const projects = new Map<string, ProjectInfo>();
 		const notes = new Map<string, NoteInfo>();
 
@@ -133,12 +154,35 @@ export class VaultIndex extends Events {
 			const parent = file.parent;
 			const inProjectFolder = !!projectFolder && parent?.path === projectFolder;
 			const isFolderNote = !!projectFolder && parent?.parent?.path === projectFolder && parent?.name === file.basename;
-			const isProject =
+			const inCourseFolder = !!courseFolder && parent?.path === courseFolder;
+			const isCourseFolderNote = !!courseFolder && parent?.parent?.path === courseFolder && parent?.name === file.basename;
+			const isCourse =
+				String(fm.type ?? fm[s.projectTypeField] ?? "").toLowerCase() === "course" ||
+				(!!s.courseTag && tags.includes(s.courseTag.toLowerCase())) ||
+				inCourseFolder || isCourseFolderNote;
+			const isProject = isCourse ||
 				(!!s.projectTypeField && String(fm[s.projectTypeField] ?? "").toLowerCase() === s.projectTypeValue.toLowerCase()) ||
 				(!!s.projectTag && tags.includes(s.projectTag.toLowerCase())) ||
 				inProjectFolder || isFolderNote;
 
-			if (isProject) {
+			if (isCourse) {
+				const str = (v: unknown) => (v === undefined || v === null || v === "" ? undefined : String(v));
+				const act = fm.active;
+				projects.set(file.path, {
+					key: file.path,
+					kind: "course",
+					name: (fm.title as string) || file.basename,
+					notePath: file.path,
+					folderPath: isCourseFolderNote ? parent?.path : undefined,
+					status: str(fm.status),
+					deadline: toDate(fm.deadline ?? fm.due),
+					area: fm.area ? stripLink(String(fm.area)) : undefined,
+					description: typeof fm.description === "string" ? fm.description : undefined,
+					code: str(fm.code), instructor: str(fm.instructor), schedule: str(fm.schedule), room: str(fm.room),
+					units: str(fm.units), term: str(fm.term ?? fm.semester), color: str(fm.color),
+					active: act === undefined || act === null ? true : act === true || String(act).toLowerCase() === "true" || String(act).toLowerCase() === "yes",
+				});
+			} else if (isProject) {
 				projects.set(file.path, {
 					key: file.path,
 					name: (fm.title as string) || file.basename,
@@ -168,6 +212,17 @@ export class VaultIndex extends Events {
 			});
 		}
 
+		// Subfolders of the course folder without a folder note become (active) courses.
+		const croot = courseFolder ? this.app.vault.getAbstractFileByPath(courseFolder) : null;
+		if (croot instanceof TFolder) {
+			const claimed = new Set([...projects.values()].map((p) => p.folderPath).filter(Boolean));
+			for (const child of croot.children) {
+				if (child instanceof TFolder && !claimed.has(child.path) && !this.isExcluded(child.path)) {
+					projects.set(child.path, { key: child.path, kind: "course", name: child.name, folderPath: child.path, active: true });
+				}
+			}
+		}
+
 		// Subfolders of the project folder without a folder note become projects too.
 		const root = projectFolder ? this.app.vault.getAbstractFileByPath(projectFolder) : null;
 		if (root instanceof TFolder) {
@@ -185,8 +240,18 @@ export class VaultIndex extends Events {
 		for (const note of notes.values()) {
 			note.project = note.kind === "project" ? note.path : this.resolveProject(note.path, []);
 		}
+		// A task tagged with a course code (e.g. #cs101 or #course/cs101) belongs to that course.
+		const byCode = new Map<string, string>();
+		for (const p of projects.values()) if (p.kind === "course" && p.code) byCode.set(p.code.toLowerCase().replace(/[\s_-]+/g, ""), p.key);
+		const fromLabels = (labels: string[]) => {
+			for (const l of labels) {
+				const k = byCode.get(l.replace(/^(course|subject)\//, "").replace(/[\s_-]+/g, ""));
+				if (k) return k;
+			}
+			return undefined;
+		};
 		for (const list of this.tasksByFile.values()) {
-			for (const t of list) t.project = this.resolveProject(t.path, t.links);
+			for (const t of list) t.project = this.resolveProject(t.path, t.links) ?? (byCode.size ? fromLabels(t.labels) : undefined);
 		}
 	}
 
@@ -200,13 +265,13 @@ export class VaultIndex extends Events {
 
 		const file = this.app.vault.getAbstractFileByPath(path);
 		if (file instanceof TFile) {
-			const fmProject = mc.getFileCache(file)?.frontmatter?.project;
-			const values: unknown[] = Array.isArray(fmProject) ? fmProject : fmProject ? [fmProject] : [];
+			const fm = mc.getFileCache(file)?.frontmatter;
+			const values: unknown[] = [fm?.course, fm?.subject, fm?.project].flatMap((v) => (Array.isArray(v) ? v : v ? [v] : []));
 			for (const v of values) {
 				const name = stripLink(String(v));
 				const dest = mc.getFirstLinkpathDest(name, path);
 				if (dest && this.projects.has(dest.path)) return dest.path;
-				const byName = [...this.projects.values()].find((p) => p.name.toLowerCase() === name.toLowerCase());
+				const byName = [...this.projects.values()].find((p) => p.name.toLowerCase() === name.toLowerCase() || (!!p.code && p.code.toLowerCase() === name.toLowerCase()));
 				if (byName) return byName.key;
 			}
 		}

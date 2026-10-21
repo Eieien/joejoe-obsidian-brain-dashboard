@@ -193,7 +193,7 @@ function renderNotebookSplit(page: HTMLElement, ctx: DashboardContext, st: HomeS
 		tabs: [{ id: "active", label: "active", icon: "zap" }, { id: "all", label: "all", icon: "table-2" }],
 		active: st.projects, onTab: (id) => update({ projects: id as HomeState["projects"] }), cls: "sbd-side-col",
 	});
-	const projects = [...index.projects.values()].filter((p) => st.projects === "all" || !isClosedStatus(p.status))
+	const projects = index.projectList().filter((p) => st.projects === "all" || !isClosedStatus(p.status))
 		.map((p) => ({ p, s: projectStats(index.tasksForProject(p.key), ctx.today, settings) }))
 		.sort((x, y) => y.s.urgent - x.s.urgent || y.s.overdue - x.s.overdue || (x.s.nextDue ?? "9999").localeCompare(y.s.nextDue ?? "9999"));
 	if (!projects.length) emptyState(pr, `No projects yet — notes in "${settings.projectFolder}/" or tagged #${settings.projectTag} show here.`);

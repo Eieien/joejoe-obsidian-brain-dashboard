@@ -2251,3 +2251,105 @@ button.sbd-money-cat-icon { border: none !important; padding: 0 !important; curs
 .sbd-money-budgetgrid .sbd-money-prefixed.is-large { height: 46px; padding: 0 12px; }
 .sbd-money-budgetgrid .sbd-money-prefixed.is-large > span, .sbd-money-budgetgrid .sbd-money-prefixed.is-large input { font-size: 1.3em !important; }
 @media (max-width: 520px) { .sbd-money-budgetgrid { grid-template-columns: 1fr; } }
+
+/* ===================== Courses ===================== */
+.sbd-courses-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.sbd-courses-title { font-family: var(--sbd-display); font-weight: 400; font-size: 1.9em; margin: 0 0 4px; letter-spacing: -0.01em; }
+.sbd-courses-actions { display: flex; gap: 8px; align-items: center; }
+.sbd-courses-section { font-family: var(--sbd-display); font-weight: 400; font-size: 1.2em; margin: 6px 0 14px; }
+.sbd-course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 26px; }
+.sbd-course-card {
+	position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px 20px 16px 22px; border-radius: 16px; cursor: pointer;
+	background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border); overflow: hidden; transition: background 150ms ease, transform 150ms ease, opacity 150ms ease;
+}
+.sbd-course-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--c); }
+.sbd-course-card:hover { background: var(--sbd-card-hover); transform: translateY(-1px); }
+.sbd-course-card:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.sbd-course-card.is-inactive { opacity: .62; }
+.sbd-course-card.is-inactive::before { background: var(--sbd-ink-3); }
+.sbd-course-card.is-inactive:hover { opacity: .9; }
+.sbd-course-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; }
+.sbd-course-code { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: var(--font-ui-smaller); font-weight: 600; letter-spacing: .02em; color: var(--c, var(--sbd-ink)); background: var(--c-bg, var(--sbd-card-hover)); }
+.sbd-course-name { font-family: var(--sbd-display); font-size: 1.3em; line-height: 1.2; color: var(--sbd-ink); }
+.sbd-course-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); }
+.sbd-course-meta .sbd-icon svg { width: 12px; height: 12px; }
+.sbd-course-meta .sbd-icon:not(:first-child) { margin-left: 8px; }
+.sbd-course-card .sbd-project-foot { display: flex; align-items: center; gap: 6px; min-height: 26px; }
+.sbd-course-add { margin-left: auto; opacity: 0; transition: opacity 120ms ease; }
+.sbd-course-card:hover .sbd-course-add, .sbd-course-card:focus-within .sbd-course-add { opacity: 1; }
+@media (hover: none) { .sbd-course-add { opacity: 1; } }
+.sbd-course-card .sbd-progress-fill, .sbd-course-card .sbd-progress > div { background: var(--c); }
+
+/* active switch */
+.sbd-course-switch {
+	all: unset; box-sizing: border-box; position: relative; flex: none; width: 38px; height: 22px; border-radius: 999px; cursor: pointer;
+	background: var(--sbd-card-hover); box-shadow: inset 0 0 0 1px var(--sbd-border); transition: background 160ms ease;
+}
+.sbd-course-switch-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--sbd-ink-3); transition: transform 160ms cubic-bezier(.2, .7, .3, 1), background 160ms ease; }
+.sbd-course-switch.is-on { background: var(--c, var(--c-emerald)); box-shadow: none; }
+.sbd-course-switch.is-on .sbd-course-switch-knob { transform: translateX(16px); background: #fff; }
+.sbd-course-switch:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.sbd-course-modal .sbd-course-switch.is-on { background: var(--c-emerald); }
+
+.sbd-courses-toggle { all: unset; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: var(--font-ui-small); color: var(--sbd-ink-2); margin: 4px 0 14px; padding: 4px 6px; border-radius: 6px; }
+.sbd-courses-toggle:hover { color: var(--sbd-ink); background: var(--sbd-card); }
+.sbd-courses-toggle .sbd-icon svg { width: 14px; height: 14px; }
+.sbd-courses-note { margin-top: -8px; }
+.sbd-courses-empty { text-align: center; padding: 48px 20px; border-radius: 16px; border: 1px dashed var(--sbd-border); }
+.sbd-courses-empty-icon { width: 52px; height: 52px; margin: 0 auto 10px; display: grid; place-items: center; border-radius: 14px; color: var(--c-indigo); background: var(--c-indigo-bg); }
+.sbd-courses-empty h3 { font-family: var(--sbd-display); font-weight: 400; margin: 0 0 6px; }
+
+/* course page header */
+.sbd-course-state { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); background: var(--sbd-card-hover); }
+.sbd-course-state.is-on { color: var(--c-emerald); background: var(--c-emerald-bg); }
+.sbd-course-detail { display: inline-flex; align-items: center; gap: 4px; font-size: var(--font-ui-smaller); color: var(--sbd-ink-2); }
+.sbd-course-detail .sbd-icon svg { width: 12px; height: 12px; }
+.sbd-hub-sub:has(.sbd-course-code) { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+
+/* course chip on tasks */
+.sbd-course-chip { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 6px; font-size: 0.78em; font-weight: 600; color: var(--c); background: var(--c-bg); cursor: pointer; }
+.sbd-course-chip:hover { filter: brightness(1.15); }
+.sbd-inactive-toggle.is-active { color: var(--sbd-ink) !important; background: var(--sbd-card-hover) !important; }
+
+/* plan semester */
+.sbd-semester-list { display: flex; flex-direction: column; gap: 2px; max-height: 46vh; overflow-y: auto; margin: 10px -6px; padding: 0 6px; }
+.sbd-semester-row { display: flex; align-items: center; gap: 10px; padding: 8px 8px; border-radius: 10px; cursor: pointer; min-height: 40px; }
+.sbd-semester-row:hover { background: var(--sbd-card); }
+.sbd-semester-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+.sbd-semester-name { flex: 1; min-width: 0; }
+.sbd-semester-setterm { display: flex; align-items: center; gap: 8px; font-size: var(--font-ui-small); color: var(--sbd-ink-2); margin-top: 6px; }
+@media (prefers-reduced-motion: reduce) { .sbd-course-card, .sbd-course-switch-knob { transition: none; } .sbd-course-card:hover { transform: none; } }
+
+/* ===================== Beat Obsidian's default button paint (button:not(.clickable-icon)) ===================== */
+button:is(.sbd-money-swatchbtn, .sbd-money-iconbtn, .sbd-money-tx-del, .sbd-money-tx-main, .sbd-money-addcat, .sbd-money-catrow,
+	.sbd-money-period-set, .sbd-courses-toggle, .sbd-money-chip, .sbd-course-switch, .sbd-money-type button) { box-shadow: none; }
+button:is(.sbd-money-iconbtn, .sbd-money-tx-del, .sbd-money-tx-main, .sbd-money-addcat, .sbd-money-catrow, .sbd-money-period-set, .sbd-courses-toggle) { background-color: transparent; }
+
+/* Colour swatches: always the real colour, big enough to see, a check on the chosen one */
+.sbd-money-swatches { grid-template-columns: repeat(auto-fill, 34px); gap: 10px; }
+button.sbd-money-swatchbtn {
+	position: relative; width: 34px; height: 34px; padding: 0; border: none; border-radius: 50%;
+	background-color: var(--c) !important; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18) !important;
+	display: grid; place-items: center; color: #fff; cursor: pointer;
+}
+button.sbd-money-swatchbtn:hover { transform: scale(1.12); }
+button.sbd-money-swatchbtn.is-active { box-shadow: 0 0 0 2px var(--sbd-surface, var(--background-primary)), 0 0 0 4px var(--c) !important; }
+button.sbd-money-swatchbtn.is-active::after {
+	content: ""; width: 9px; height: 5px; margin-top: -2px; border-left: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(-45deg);
+}
+button.sbd-money-swatchbtn:focus-visible { box-shadow: 0 0 0 2px var(--sbd-surface, var(--background-primary)), 0 0 0 4px var(--interactive-accent) !important; }
+.sbd-money-pickerlabel .sbd-money-picked { margin-left: 8px; display: inline-flex; align-items: center; gap: 6px; color: var(--sbd-ink); font-weight: 600; text-transform: capitalize; }
+.sbd-money-pickerlabel .sbd-money-picked::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+
+/* icon picker + other flat buttons keep their intended look */
+button.sbd-money-iconbtn:hover { background-color: var(--sbd-card-hover); }
+button.sbd-money-iconbtn.is-active { background-color: var(--c-bg); color: var(--c); box-shadow: inset 0 0 0 1.5px var(--c); }
+button.sbd-money-tx-del:hover { background-color: var(--c-red-bg); color: var(--c-red); }
+button.sbd-money-tx-main:hover, button.sbd-money-catrow:hover { background-color: var(--sbd-card); }
+button.sbd-money-catrow.is-active { background-color: var(--sbd-card-hover); }
+button.sbd-money-addcat:hover, button.sbd-courses-toggle:hover { background-color: var(--sbd-card); }
+button.sbd-money-chip { background-color: var(--sbd-card-hover); }
+button.sbd-course-switch { background-color: var(--sbd-card-hover); box-shadow: inset 0 0 0 1px var(--sbd-border); }
+button.sbd-course-switch.is-on { background-color: var(--c, var(--c-emerald)); box-shadow: none; }
+.sbd-course-modal button.sbd-course-switch.is-on { background-color: var(--c-emerald); }
+button.sbd-money-cat-icon { background-color: var(--c-bg, var(--sbd-card-hover)); color: var(--c, var(--sbd-ink-2)); }

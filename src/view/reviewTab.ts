@@ -98,7 +98,7 @@ export function renderReviewTab(el: HTMLElement, ctx: DashboardContext, st: Revi
 
 	// ---- Projects ----
 	const projBody = card(main, "Projects", { icon: "folder-kanban" });
-	const projects = [...idx.projects.values()].map((p) => {
+	const projects = [...idx.projects.values()].filter((p) => p.kind !== "course" || p.active !== false).map((p) => {
 		const pt = idx.tasksForProject(p.key).filter((t) => t.status !== "cancelled");
 		const doneWeek = pt.filter((t) => t.status === "done" && t.doneDate && t.doneDate >= start && t.doneDate <= end).length;
 		const doneAll = pt.filter((t) => t.status === "done").length;

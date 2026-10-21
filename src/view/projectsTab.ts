@@ -33,7 +33,7 @@ function renderProjectGrid(el: HTMLElement, ctx: DashboardContext, st: ProjectsS
 	add.createSpan({ text: "New project" });
 	add.onclick = newProject;
 
-	const projects = [...index.projects.values()]
+	const projects = index.projectList()
 		.filter((p) => st.show === "all" || !isClosedStatus(p.status))
 		.map((p) => ({ p, s: projectStats(index.tasksForProject(p.key), ctx.today, settings) }))
 		.sort((a, b) => b.s.urgent - a.s.urgent || b.s.overdue - a.s.overdue || a.p.name.localeCompare(b.p.name));
@@ -148,14 +148,20 @@ class NewProjectModal extends Modal {
 }
 
 /** Everything connected to one project: description, tasks, deadlines, notes, activity. */
-function renderProjectHub(el: HTMLElement, ctx: DashboardContext, p: ProjectInfo, back: () => void): void {
+export interface HubOptions {
+	backLabel?: string;
+	/** Extra header content (course details, active switch…). */
+	header?: (sub: HTMLElement, actions: HTMLElement) => void;
+}
+
+export function renderProjectHub(el: HTMLElement, ctx: DashboardContext, p: ProjectInfo, back: () => void, opts: HubOptions = {}): void {
 	const { index, settings } = ctx.plugin;
 	const tasks = index.tasksForProject(p.key);
 	const s = projectStats(tasks, ctx.today, settings);
 
 	// ---- Header ----
 	const header = el.createDiv({ cls: "sbd-hub-head" });
-	const backBtn = header.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { "aria-label": "All projects" } });
+	const backBtn = header.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { "aria-label": opts.backLabel ?? "All projects" } });
 	setIcon(backBtn, "arrow-left");
 	backBtn.onclick = back;
 	const titles = header.createDiv({ cls: "sbd-hub-titles" });
@@ -165,6 +171,7 @@ function renderProjectHub(el: HTMLElement, ctx: DashboardContext, p: ProjectInfo
 	if (p.area) pill(sub, p.area.toLowerCase());
 	if (p.folderPath) sub.createSpan({ cls: "sbd-muted", text: p.folderPath });
 	const actions = header.createDiv({ cls: "sbd-hub-actions" });
+	opts.header?.(sub, actions);
 	if (p.notePath) {
 		const openBtn = actions.createEl("button", { text: "Open note" });
 		openBtn.onclick = () => ctx.openPath(p.notePath!);
@@ -288,7 +295,7 @@ function renderDescription(parent: HTMLElement, ctx: DashboardContext, p: Projec
 		body.empty();
 		if (text) ctx.renderMarkdown(text, body.createDiv({ cls: "sbd-desc-md markdown-rendered" }), p.notePath ?? "");
 		else {
-			const empty = body.createDiv({ cls: "sbd-desc-empty", text: "What is this project, why does it matter, and what does done look like? Click to write a description." });
+			const empty = body.createDiv({ cls: "sbd-desc-empty", text: p.kind === "course" ? "What is this course about? Syllabus link, grading, exam dates, how to reach the instructor… Click to write." : "What is this project, why does it matter, and what does done look like? Click to write a description." });
 			empty.onclick = edit;
 		}
 	};

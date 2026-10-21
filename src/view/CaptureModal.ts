@@ -145,11 +145,17 @@ export class CaptureModal extends Modal {
 			};
 		}
 
-		const projects = [...this.plugin.index.projects.values()].sort((a, b) => a.name.localeCompare(b.name));
-		const pr = this.row("folder-kanban", "Project");
+		const projects = this.plugin.index.projectList().sort((a, b) => a.name.localeCompare(b.name));
+		const courses = this.plugin.index.courseList().filter((c) => c.active !== false || c.key === this.project);
+		const pr = this.row("folder-kanban", courses.length ? "Project / course" : "Project");
 		const sel = pr.createEl("select", { cls: "dropdown sbd-cap-select" });
-		sel.createEl("option", { value: "", text: projects.length ? "No project" : "No projects found" });
-		for (const p of projects) sel.createEl("option", { value: p.key, text: p.name });
+		sel.createEl("option", { value: "", text: projects.length || courses.length ? "None" : "No projects found" });
+		if (courses.length) {
+			const g = sel.createEl("optgroup", { attr: { label: "Courses this semester" } });
+			for (const c of courses) g.createEl("option", { value: c.key, text: `${c.code ? `${c.code} — ` : ""}${c.name}` });
+		}
+		const pg = courses.length ? sel.createEl("optgroup", { attr: { label: "Projects" } }) : sel;
+		for (const p of projects) pg.createEl("option", { value: p.key, text: p.name });
 		sel.value = this.project;
 		sel.onchange = () => {
 			this.project = sel.value;
@@ -162,7 +168,7 @@ export class CaptureModal extends Modal {
 			{ value: "daily", label: "Today's note", icon: "calendar-days" },
 			{ value: "inbox", label: "Inbox", icon: "inbox" },
 		];
-		if (project?.notePath) targets.push({ value: "project", label: `${project.name} note`, icon: "folder-kanban" });
+		if (project?.notePath) targets.push({ value: "project", label: `${project.code ?? project.name} note`, icon: project.kind === "course" ? "graduation-cap" : "folder-kanban" });
 		if (this.target === "project" && !project?.notePath) this.target = "daily";
 		this.segmented(this.row("save", "Save to"), targets, this.target, (v) => { this.target = v; this.renderForm(); });
 	}

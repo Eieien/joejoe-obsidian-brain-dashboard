@@ -59,6 +59,16 @@ It doesn't ask you to reorganize anything. It reads the notes, tasks and frontma
   - open tasks by status and weekly activity
   - deadlines, linked notes, daily-note mentions and recently completed tasks
 
+### Courses (school)
+Your subjects, each with a code, instructor, schedule, room, units, semester and color. They work like projects, and you can mark each one **active** or **inactive** for the semester.
+- **Courses tab:** cards for *This semester* and, collapsed, *Not this semester*. Each card has a progress bar, open/urgent/overdue counts, the next due date, a quick **Add task** button and an **Active** switch.
+- **Plan semester:** name the term and tick the courses you're taking. Everything else goes inactive, and the semester name is set on the ticked courses.
+- **Course page:** the project page (description, open tasks, deadlines, linked notes, daily-note mentions, activity) with the course details on top. You can mark it active or inactive there, or edit its details.
+- **Tasks belong to a course** when they're in the course note or its folder, when they link `[[Course]]`, when their note has `course: …` in its properties, or when they're tagged with the course code (`#cs201`).
+- **Inactive courses stay out of the way:** their tasks are hidden from Home, Tasks, the Calendar and Review (a setting, also toggled from the Tasks toolbar), but always show on the course page.
+- **Tasks show a colored course chip** (`CS 201`). The Tasks filter has *All active courses* and each course, and quick capture lists this semester's courses first.
+- **Turning notes into courses:** put them in `Courses/`, tag them `#course`, or add `type: course`. Properties: `code`, `instructor`, `schedule`, `room`, `units`, `term`, `color`, `active`.
+
 ### Habits and trackers
 ![Habits](docs/screenshots/habits.png)
 - **Checkbox habits**: tick any day in the week grid, and move between weeks. Each tick writes `habit: true` / `false` into that day's daily note.
@@ -345,7 +355,7 @@ src/
     homeTab.ts  tasksTab.ts  kanban.ts  calendarTab.ts  dayModal.ts
     projectsTab.ts  trackersTab.ts  habits.ts  libraryTab.ts
     CaptureModal.ts  widgets.ts  homeEdit.ts  pickers.ts  labels.ts
-    inboxTab.ts  notesTab.ts  reviewTab.ts  moneyView.ts  cover.ts  coverControls.ts
+    inboxTab.ts  notesTab.ts  reviewTab.ts  moneyView.ts  coursesTab.ts  cover.ts  coverControls.ts
     charts.ts  components.ts  trackerModals.ts  dither.ts
   secrets/
     crypto.ts          AES-GCM + PBKDF2 envelope, entry helpers (pure, tested)

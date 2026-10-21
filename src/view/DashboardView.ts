@@ -12,12 +12,13 @@ import type { DashboardContext } from "./components";
 import { defaultHome, renderHomeTab, type HomeState } from "./homeTab";
 import { defaultLibrary, renderLibraryTab, type LibraryState } from "./libraryTab";
 import { renderProjectsTab, type ProjectsState } from "./projectsTab";
+import { renderCoursesTab, type CoursesState } from "./coursesTab";
 import { defaultTaskFilters, renderTasksTab, type TaskFilters } from "./tasksTab";
 import { renderTrackersTab, type TrackersState } from "./trackersTab";
 
 export const VIEW_TYPE_DASHBOARD = "second-brain-dashboard";
 
-export type TabId = "home" | "inbox" | "tasks" | "calendar" | "projects" | "notes" | "trackers" | "review" | "library";
+export type TabId = "home" | "inbox" | "tasks" | "calendar" | "projects" | "courses" | "notes" | "trackers" | "review" | "library";
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
 	{ id: "home", label: "home", icon: "home" },
@@ -25,6 +26,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 	{ id: "tasks", label: "tasks", icon: "check-square" },
 	{ id: "calendar", label: "calendar", icon: "calendar" },
 	{ id: "projects", label: "projects", icon: "folder-kanban" },
+	{ id: "courses", label: "courses", icon: "graduation-cap" },
 	{ id: "notes", label: "notes", icon: "gem" },
 	{ id: "trackers", label: "trackers", icon: "activity" },
 	{ id: "review", label: "review", icon: "clipboard-check" },
@@ -37,6 +39,7 @@ interface DashboardState {
 	tasks: TaskFilters;
 	calendar: CalendarState;
 	projects: ProjectsState;
+	courses: CoursesState;
 	trackers: TrackersState;
 	library: LibraryState;
 	inbox: InboxState;
@@ -62,6 +65,7 @@ export class DashboardView extends ItemView {
 			tasks: defaultTaskFilters(plugin.settings.defaultTaskView),
 			calendar: { mode: "month", anchor: "", layers: [...DEFAULT_CAL_LAYERS] },
 			projects: { show: "active" },
+			courses: { showInactive: false },
 			trackers: { range: "month", hidden: [], weekOffset: 0 },
 			library: defaultLibrary(),
 			inbox: {},
@@ -106,6 +110,7 @@ export class DashboardView extends ItemView {
 				tasks: { ...cur.tasks, ...(s.tasks ?? {}) },
 				calendar: { ...cur.calendar, ...(s.calendar ?? {}) },
 				projects: { ...cur.projects, ...(s.projects ?? {}) },
+				courses: { ...cur.courses, ...(s.courses ?? {}) },
 				trackers: { ...cur.trackers, ...(s.trackers ?? {}) },
 				library: { ...cur.library, ...(s.library ?? {}) },
 				inbox: { ...cur.inbox, ...(s.inbox ?? {}) },
@@ -167,7 +172,7 @@ export class DashboardView extends ItemView {
 			plugin: this.plugin,
 			today: moment().format("YYYY-MM-DD"),
 			openPath: (path, line, newLeaf) => void this.openPath(path, line, newLeaf),
-			openProject: (key) => this.navigate("projects", { projects: { selected: key } }),
+			openProject: (key) => (this.plugin.index.projects.get(key)?.kind === "course" ? this.navigate("courses", { courses: { selected: key } }) : this.navigate("projects", { projects: { selected: key } })),
 			openLibrary: (filter) => this.navigate("library", { library: { folder: undefined, tag: undefined, area: undefined, kind: "all", search: "", ...filter } as Partial<LibraryState> }),
 			openCalendarDay: (date) => new DayModal(this.app, ctx, date).open(),
 			renderMarkdown: (md, el, sourcePath) => void MarkdownRenderer.render(this.app, md, el, sourcePath, this),
@@ -188,7 +193,7 @@ export class DashboardView extends ItemView {
 				const n = inboxItems(ctx).length;
 				if (n) b.createSpan({ cls: "sbd-tab-badge", text: String(n) });
 			}
-			b.onclick = () => this.navigate(t.id, t.id === "projects" ? { projects: { selected: undefined } } : t.id === "trackers" ? { trackers: { selected: undefined } } : {});
+			b.onclick = () => this.navigate(t.id, t.id === "projects" ? { projects: { selected: undefined } } : t.id === "courses" ? { courses: { selected: undefined } } : t.id === "trackers" ? { trackers: { selected: undefined } } : {});
 		}
 		const actions = header.createDiv({ cls: "sbd-header-actions" });
 		const capture = actions.createEl("button", { cls: "sbd-capture-btn" });
@@ -222,6 +227,9 @@ export class DashboardView extends ItemView {
 				break;
 			case "calendar":
 				renderCalendarTab(inner, ctx, this.state.calendar, (p) => this.navigate("calendar", { calendar: p }));
+				break;
+			case "courses":
+				renderCoursesTab(inner, ctx, this.state.courses, (p) => this.navigate("courses", { courses: p }));
 				break;
 			case "projects":
 				renderProjectsTab(inner, ctx, this.state.projects, (p) => this.navigate("projects", { projects: p }));

@@ -754,7 +754,8 @@ export class CategoryModal extends Modal {
 			b.oninput = () => { draft.budget = Math.max(0, Number(b.value.replace(/[₱,\s]/g, "")) || 0); };
 		}
 
-		el.createDiv({ cls: "sbd-money-flabel sbd-money-pickerlabel", text: "Colour" });
+		const colorLabel = el.createDiv({ cls: "sbd-money-flabel sbd-money-pickerlabel", text: "Colour" });
+		const picked = colorLabel.createSpan({ cls: `sbd-money-picked sbd-c-${draft.color}`, text: draft.color });
 		const colors = el.createDiv({ cls: "sbd-money-swatches", attr: { role: "radiogroup", "aria-label": "Colour" } });
 		el.createDiv({ cls: "sbd-money-flabel sbd-money-pickerlabel", text: "Icon" });
 		const icons = el.createDiv({ cls: `sbd-money-icons sbd-c-${draft.color}`, attr: { role: "radiogroup", "aria-label": "Icon" } });
@@ -762,6 +763,8 @@ export class CategoryModal extends Modal {
 			const sw = colors.createEl("button", { cls: `sbd-money-swatchbtn sbd-c-${col}` + (draft.color === col ? " is-active" : ""), attr: { type: "button", role: "radio", "aria-checked": String(draft.color === col), "aria-label": col, title: col } });
 			sw.onclick = () => {
 				draft.color = col;
+				picked.className = `sbd-money-picked sbd-c-${col}`;
+				picked.setText(col);
 				colors.querySelectorAll("button").forEach((x) => { x.toggleClass("is-active", x === sw); x.setAttr("aria-checked", String(x === sw)); });
 				icons.className = `sbd-money-icons sbd-c-${col}`;
 				drawPreview();
