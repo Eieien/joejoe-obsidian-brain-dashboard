@@ -2224,3 +2224,30 @@ button.sbd-money-cat-icon { border: none !important; padding: 0 !important; curs
 @media (prefers-reduced-motion: reduce) { .sbd-home-card, .sbd-ring-fill, .sbd-habits-fill { transition: none; } .sbd-home-card:hover { transform: none; } }
 
 .sbd-money-swatches { grid-template-columns: repeat(auto-fill, 30px); gap: 10px; }
+
+/* ---- daily / weekly / monthly budgets ---- */
+.sbd-money-periods-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sbd-money-periods-head .sbd-money-h { margin: 0; }
+.sbd-money-periods-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.sbd-money-period { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px; border-radius: 14px; background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border); }
+.sbd-money-period-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.sbd-money-period-label { font-size: var(--font-ui-small); color: var(--sbd-ink); font-weight: 600; }
+.sbd-money-period-range { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); }
+.sbd-money-period-value { font-family: var(--sbd-display); font-size: 1.8em; line-height: 1.1; color: var(--sbd-ink); font-variant-numeric: tabular-nums; }
+.sbd-money-period-value.is-neg { color: var(--c-red); }
+.sbd-money-period-unit { font-family: var(--sbd-font); font-size: 0.45em; color: var(--sbd-ink-2); }
+.sbd-money-period-note { font-size: var(--font-ui-smaller); color: var(--sbd-ink-3); font-variant-numeric: tabular-nums; }
+.sbd-money-period .sbd-money-track { height: 7px; }
+.sbd-money-period.is-day .sbd-money-track-fill { background: var(--c-sky); }
+.sbd-money-period.is-week .sbd-money-track-fill { background: var(--c-violet); }
+.sbd-money-period.is-month .sbd-money-track-fill { background: var(--c-emerald); }
+.sbd-money-period .sbd-money-track.is-near .sbd-money-track-fill { background: var(--c-amber); }
+.sbd-money-period .sbd-money-track.is-over .sbd-money-track-fill { background: var(--c-red); }
+.sbd-money-period-set { all: unset; box-sizing: border-box; align-self: flex-start; padding: 6px 12px; border-radius: 999px; border: 1px dashed var(--sbd-border); color: var(--sbd-ink-2); font-size: var(--font-ui-smaller); cursor: pointer; }
+.sbd-money-period-set:hover { color: var(--sbd-ink); border-color: var(--sbd-ink-3); }
+.sbd-money-period-set:focus-visible { outline: 2px solid var(--interactive-accent); }
+.sbd-money-budgettitle { display: block; margin-bottom: 10px; color: var(--sbd-ink); font-weight: 600; }
+.sbd-money-budgetgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.sbd-money-budgetgrid .sbd-money-prefixed.is-large { height: 46px; padding: 0 12px; }
+.sbd-money-budgetgrid .sbd-money-prefixed.is-large > span, .sbd-money-budgetgrid .sbd-money-prefixed.is-large input { font-size: 1.3em !important; }
+@media (max-width: 520px) { .sbd-money-budgetgrid { grid-template-columns: 1fr; } }

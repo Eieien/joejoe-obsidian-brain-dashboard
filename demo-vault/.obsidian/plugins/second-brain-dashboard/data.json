@@ -260,6 +260,8 @@
         "kind": "income",
         "budget": 0
       }
-    ]
+    ],
+    "dailyBudget": 1000,
+    "weeklyBudget": 6000
   }
 }

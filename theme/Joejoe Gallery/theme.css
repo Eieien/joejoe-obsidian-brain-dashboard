@@ -298,3 +298,104 @@ input:focus, textarea:focus, select:focus { box-shadow: 0 0 0 2px color-mix(in s
 .clickable-icon { border-radius: 8px; }
 
 /* Graph and canvas pick up the warm palette through the variables above. */
+
+
+/* ==========================================================================
+   Code blocks — VS Code style (Dark+ / Light+ palette)
+   ========================================================================== */
+.theme-dark {
+	--code-background: #161616;
+	--code-border: #2a2a2a;
+	--code-normal: #d4d4d4;
+	--code-comment: #6e7681;
+	--code-function: #dcdcaa;
+	--code-important: #d16969;
+	--code-keyword: #c586c0;
+	--code-operator: #d4d4d4;
+	--code-property: #9cdcfe;
+	--code-punctuation: #cccccc;
+	--code-string: #ce9178;
+	--code-tag: #569cd6;
+	--code-value: #b5cea8;
+	--code-type: #4ec9b0;
+	--code-constant: #4fc1ff;
+	--code-storage: #569cd6;
+	--code-param: #f07178;
+	--code-gutter: #5a5a5a;
+}
+.theme-light {
+	--code-background: #f8f8f8;
+	--code-border: #e5e5e5;
+	--code-normal: #1f1f1f;
+	--code-comment: #6e7781;
+	--code-function: #795e26;
+	--code-important: #cd3131;
+	--code-keyword: #af00db;
+	--code-operator: #1f1f1f;
+	--code-property: #001080;
+	--code-punctuation: #3b3b3b;
+	--code-string: #a31515;
+	--code-tag: #800000;
+	--code-value: #098658;
+	--code-type: #267f99;
+	--code-constant: #0070c1;
+	--code-storage: #0000ff;
+	--code-param: #c4314b;
+	--code-gutter: #a0a0a0;
+}
+body { --font-code-gallery: "Cascadia Mono", "Cascadia Code", Consolas, "JetBrains Mono", "SF Mono", Menlo, monospace; }
+
+/* The block itself */
+.markdown-rendered pre {
+	background: var(--code-background) !important;
+	border: 1px solid var(--code-border);
+	border-radius: 10px;
+	padding: 16px 20px;
+}
+.markdown-rendered pre, .markdown-rendered pre code, .markdown-source-view.mod-cm6 .HyperMD-codeblock, .markdown-source-view.mod-cm6 .cm-line.HyperMD-codeblock {
+	font-family: var(--font-code-gallery);
+	font-size: 0.88em;
+	line-height: 1.6;
+	color: var(--code-normal);
+	font-variant-ligatures: none;
+}
+.markdown-source-view.mod-cm6 .HyperMD-codeblock { background: var(--code-background) !important; }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-begin { border-top-left-radius: 10px; border-top-right-radius: 10px; padding-top: 6px; }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-end { border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 6px; }
+.markdown-rendered pre .copy-code-button { background: transparent; color: var(--code-gutter); font-family: var(--font-interface); }
+.markdown-rendered pre .copy-code-button:hover { color: var(--code-normal); background: rgba(127, 127, 127, 0.12); }
+/* line numbers (editor gutter and code-block plugins) */
+.markdown-source-view.mod-cm6 .cm-lineNumbers .cm-gutterElement, [class*="line-number"], [class*="LineNumber"] { color: var(--code-gutter) !important; font-family: var(--font-code-gallery); }
+
+/* Tokens — reading view (Prism) */
+.markdown-rendered pre :is(.token.comment, .token.prolog, .token.doctype, .token.cdata) { color: var(--code-comment); font-style: italic; }
+.markdown-rendered pre :is(.token.keyword, .token.control, .token.control-flow, .token.module) { color: var(--code-keyword); }
+.markdown-rendered pre :is(.token.boolean, .token.null, .token.nil, .token.keyword.null) { color: var(--code-storage); }
+.markdown-rendered pre :is(.token.function, .token.function-name, .token.method, .token.decorator, .token.annotation, .token.macro) { color: var(--code-function); }
+.markdown-rendered pre :is(.token.class-name, .token.builtin, .token.type, .token.namespace, .token.maybe-class-name) { color: var(--code-type); opacity: 1; }
+.markdown-rendered pre :is(.token.string, .token.char, .token.template-string, .token.attr-value, .token.url) { color: var(--code-string); }
+.markdown-rendered pre :is(.token.number, .token.unit, .token.hexcode) { color: var(--code-value); }
+.markdown-rendered pre :is(.token.constant, .token.symbol, .token.enum) { color: var(--code-constant); }
+.markdown-rendered pre :is(.token.variable, .token.property, .token.attr-name, .token.key, .token.field) { color: var(--code-property); }
+.markdown-rendered pre :is(.token.parameter, .token.named-argument) { color: var(--code-param); font-style: italic; }
+.markdown-rendered pre :is(.token.tag, .token.selector) { color: var(--code-tag); }
+.markdown-rendered pre :is(.token.regex, .token.important) { color: var(--code-important); }
+.markdown-rendered pre :is(.token.operator, .token.entity) { color: var(--code-operator); background: none; }
+.markdown-rendered pre .token.punctuation { color: var(--code-punctuation); }
+.markdown-rendered pre :is(.token.interpolation-punctuation, .token.template-punctuation) { color: var(--code-storage); }
+
+/* Tokens — editing view (CodeMirror) */
+.markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-comment, .cm-meta) { color: var(--code-comment); font-style: italic; }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock .cm-keyword { color: var(--code-keyword); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-atom, .cm-bool) { color: var(--code-storage); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-def, .cm-function) { color: var(--code-function); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-type, .cm-builtin, .cm-variable-3, .cm-qualifier) { color: var(--code-type); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-string, .cm-string-2) { color: var(--code-string); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock .cm-number { color: var(--code-value); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-variable, .cm-variable-2, .cm-property, .cm-attribute) { color: var(--code-property); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-tag, .cm-bracket) { color: var(--code-tag); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-operator, .cm-punctuation) { color: var(--code-punctuation); }
+.markdown-source-view.mod-cm6 .HyperMD-codeblock .cm-hmd-codeblock { color: var(--code-normal); }
+
+/* code inside a block: no inline-code chip */
+.markdown-rendered pre code { color: var(--code-normal); background: none !important; box-shadow: none !important; padding: 0 !important; font-size: inherit; border-radius: 0; }

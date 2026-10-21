@@ -267,7 +267,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
 	savedViews: [],
 	autoReload: true,
 	secrets: DEFAULT_SECRETS,
-	money: { folder: "Finance/Ledger", currency: "PHP", monthlyBudget: 0, categories: DEFAULT_MONEY_CATEGORIES },
+	money: { folder: "Finance/Ledger", currency: "PHP", monthlyBudget: 0, dailyBudget: 0, weeklyBudget: 0, categories: DEFAULT_MONEY_CATEGORIES },
 };
 
 export class DashboardSettingTab extends PluginSettingTab {

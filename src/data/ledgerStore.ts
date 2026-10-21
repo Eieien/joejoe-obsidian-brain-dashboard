@@ -8,6 +8,9 @@ export interface MoneySettings {
 	currency: string;
 	/** Overall monthly spending budget (0 = use the sum of category budgets). */
 	monthlyBudget: number;
+	/** Daily and weekly spending budgets (0 = none). */
+	dailyBudget: number;
+	weeklyBudget: number;
 	categories: MoneyCategory[];
 }
 

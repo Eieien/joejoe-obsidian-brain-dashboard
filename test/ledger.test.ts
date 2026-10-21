@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { dailyByCategory, topExpenses, weekdayAverages, addTx, DEFAULT_MONEY_CATEGORIES as C, editTx, newLedgerContent, parseLedger, parseQuick, peso, shiftMonth, summarize } from "../src/data/ledger";
+import { periodBudgets, weekStartOf, dailyByCategory, topExpenses, weekdayAverages, addTx, DEFAULT_MONEY_CATEGORIES as C, editTx, newLedgerContent, parseLedger, parseQuick, peso, shiftMonth, summarize } from "../src/data/ledger";
 
 let n = 0;
 const t = (name: string, fn: () => void) => { fn(); n++; console.log("ok -", name); };
@@ -72,6 +72,21 @@ t("months shift across years; pesos format", () => {
 	assert.equal(peso(1234).replace(/\s/g, ""), "₱1,234");
 	assert.equal(peso(-99.5).replace(/\s/g, ""), "−₱99.50");
 	assert.equal(peso(500, { sign: true }).replace(/\s/g, ""), "+₱500");
+});
+
+t("daily / weekly / monthly budgets", () => {
+	assert.equal(weekStartOf("2026-10-22", true), "2026-10-19");  // Thursday → Monday
+	assert.equal(weekStartOf("2026-10-22", false), "2026-10-18"); // → Sunday
+	assert.equal(weekStartOf("2026-11-01", true), "2026-10-26");  // week spans two months
+	let c = newLedgerContent("2026-10");
+	c = addTx(c, { date: "2026-10-18", type: "expense", amount: 100, category: "Food", note: "" }); // last week (Sun)
+	c = addTx(c, { date: "2026-10-20", type: "expense", amount: 300, category: "Food", note: "" });
+	c = addTx(c, { date: "2026-10-22", type: "expense", amount: 250, category: "Food", note: "" });
+	c = addTx(c, { date: "2026-10-22", type: "income", amount: 9000, category: "Salary", note: "" });
+	const [day, week, month] = periodBudgets(parseLedger(c), "2026-10-22", true, { daily: 500, weekly: 3000, monthly: 20000 });
+	assert.deepEqual([day.spent, week.spent, month.spent], [250, 550, 650]);
+	assert.deepEqual([day.budget, week.budget, month.budget], [500, 3000, 20000]);
+	assert.equal(week.elapsed, 4 / 7);
 });
 
 t("analytics: daily by category, weekday averages, top expenses", () => {

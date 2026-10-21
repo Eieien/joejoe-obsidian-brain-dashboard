@@ -190,6 +190,49 @@ export function summarize(txs: Tx[], month: string, today: string, categories: M
 	};
 }
 
+/** Add days to a YYYY-MM-DD date. */
+export function addDaysISO(date: string, n: number): string {
+	const d = new Date(`${date}T00:00:00Z`);
+	d.setUTCDate(d.getUTCDate() + n);
+	return d.toISOString().slice(0, 10);
+}
+
+/** First day of the week containing `date`. */
+export function weekStartOf(date: string, mondayFirst: boolean): string {
+	const dow = new Date(`${date}T00:00:00Z`).getUTCDay();
+	return addDaysISO(date, -(mondayFirst ? (dow + 6) % 7 : dow));
+}
+
+/** Total spending between two dates, inclusive. */
+export function spentBetween(txs: Tx[], from: string, to: string): number {
+	return txs.filter((t) => t.type === "expense" && t.date >= from && t.date <= to).reduce((s, t) => s + t.amount, 0);
+}
+
+export interface PeriodBudget {
+	key: "day" | "week" | "month";
+	label: string;
+	spent: number;
+	budget: number;
+	/** Share of the period already gone (0–1), for a pace marker. */
+	elapsed: number;
+	from: string;
+	to: string;
+}
+
+/** Today / this week / this month against their budgets (0 = no budget set). */
+export function periodBudgets(txs: Tx[], today: string, mondayFirst: boolean, budgets: { daily: number; weekly: number; monthly: number }): PeriodBudget[] {
+	const ws = weekStartOf(today, mondayFirst);
+	const month = today.slice(0, 7);
+	const n = daysInMonth(month);
+	const day = Number(today.slice(8, 10));
+	const weekDay = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${ws}T00:00:00Z`)) / 86_400_000) + 1;
+	return [
+		{ key: "day", label: "Today", spent: spentBetween(txs, today, today), budget: budgets.daily, elapsed: 0, from: today, to: today },
+		{ key: "week", label: "This week", spent: spentBetween(txs, ws, addDaysISO(ws, 6)), budget: budgets.weekly, elapsed: weekDay / 7, from: ws, to: addDaysISO(ws, 6) },
+		{ key: "month", label: "This month", spent: spentBetween(txs, `${month}-01`, `${month}-${String(n).padStart(2, "0")}`), budget: budgets.monthly, elapsed: day / n, from: `${month}-01`, to: `${month}-${n}` },
+	];
+}
+
 /** Spending per day, split by category: rows[day-1] = { Food: 250, … }. */
 export function dailyByCategory(txs: Tx[], month: string): Record<string, number>[] {
 	const n = daysInMonth(month);

@@ -5,7 +5,7 @@
 import { App, Menu, Modal, Notice, setIcon } from "obsidian";
 import type SecondBrainPlugin from "../main";
 import {
-	dailyByCategory, daysInMonth, monthTitle, parseQuick, peso, shiftMonth, summarize, topExpenses, weekdayAverages,
+	dailyByCategory, daysInMonth, monthTitle, parseQuick, periodBudgets, peso, shiftMonth, summarize, topExpenses, weekdayAverages,
 	type MoneyCategory, type MonthSummary, type Tx, type TxType,
 } from "../data/ledger";
 import { styleClasses } from "../settings";
@@ -179,15 +179,16 @@ export function renderMoney(el: HTMLElement, ctx: DashboardContext, st: MoneySta
 	gear.onclick = () => new MoneySettingsModal(ctx.app, p, () => ctx.rerender()).open();
 
 	const body = root.createDiv({ cls: "sbd-money-body" });
-	whenLoaded(body, p.ledger.month(month), (txs) => {
+	whenLoaded(body, Promise.all([p.ledger.month(month), p.ledger.month(shiftMonth(month, -1))]), ([txs, prevTxs]) => {
 		const s = summarize(txs, month, ctx.today, p.settings.money.categories, p.settings.money.monthlyBudget);
 		hero(body, ctx, s, month);
+		periods(body, ctx, [...prevTxs, ...txs], s, month);
 		quickAdd(body, ctx, month);
-		curve(body.createDiv({ cls: "sbd-money-panel" }), ctx, s, month);
-		insights(body, ctx, txs, s, month);
 		const cols = body.createDiv({ cls: "sbd-money-cols" });
 		categoriesBlock(cols.createDiv({ cls: "sbd-money-col" }), ctx, s, txs, month, st, update);
 		ledgerBlock(cols.createDiv({ cls: "sbd-money-col sbd-money-col-wide" }), ctx, txs, st, update);
+		curve(body.createDiv({ cls: "sbd-money-panel" }), ctx, s, month);
+		insights(body, ctx, txs, s, month);
 	});
 }
 
@@ -225,6 +226,46 @@ function hero(parent: HTMLElement, ctx: DashboardContext, s: MonthSummary, month
 	fact("Spent", money(p, s.spent), s.elapsed ? `${money(p, Math.round(s.perDay))} a day` : "—");
 	fact("Net", money(p, s.net, true), s.net >= 0 ? "Income minus spending" : "Spending more than income", s.net < 0 ? "is-neg" : "is-pos");
 	fact("Saved", s.income ? `${Math.max(0, Math.round((s.net / s.income) * 100))}%` : "—", "Of this month's income");
+}
+
+/** Today / this week / this month against their budgets. */
+function periods(parent: HTMLElement, ctx: DashboardContext, txs: Tx[], s: MonthSummary, month: string): void {
+	const p = ctx.plugin;
+	const m = p.settings.money;
+	const current = month === ctx.today.slice(0, 7);
+	const all = periodBudgets(txs, ctx.today, ctx.plugin.settings.weekStartsMonday, { daily: m.dailyBudget || 0, weekly: m.weeklyBudget || 0, monthly: s.budget });
+	const list = current ? all : all.filter((x) => x.key === "month");
+	const wrap = parent.createDiv({ cls: "sbd-money-periods" });
+	const head = wrap.createDiv({ cls: "sbd-money-periods-head" });
+	head.createEl("h3", { cls: "sbd-money-h", text: "Your budgets" });
+	const edit = head.createEl("button", { cls: "sbd-ghost-btn" });
+	setIcon(edit.createSpan({ cls: "sbd-icon" }), "pencil");
+	edit.createSpan({ text: "Set budgets" });
+	edit.onclick = () => new MoneySettingsModal(ctx.app, p, () => ctx.rerender()).open();
+	const grid = wrap.createDiv({ cls: "sbd-money-periods-grid" });
+	for (const b of list) {
+		const card = grid.createDiv({ cls: `sbd-money-period is-${b.key}` });
+		const top = card.createDiv({ cls: "sbd-money-period-top" });
+		top.createSpan({ cls: "sbd-money-period-label", text: b.key === "month" && !current ? monthTitle(month) : b.label });
+		if (b.key === "week") top.createSpan({ cls: "sbd-money-period-range", text: `${shortDate(b.from)} – ${shortDate(b.to)}` });
+		if (!b.budget) {
+			card.createDiv({ cls: "sbd-money-period-value", text: money(p, b.spent) });
+			const set = card.createEl("button", { cls: "sbd-money-period-set", text: `Set a ${b.key === "day" ? "daily" : b.key === "week" ? "weekly" : "monthly"} budget` });
+			set.onclick = () => new MoneySettingsModal(ctx.app, p, () => ctx.rerender()).open();
+			continue;
+		}
+		const left = b.budget - b.spent;
+		const val = card.createDiv({ cls: "sbd-money-period-value" + (left < 0 ? " is-neg" : "") });
+		val.createSpan({ text: money(p, Math.abs(left)) });
+		val.createSpan({ cls: "sbd-money-period-unit", text: left >= 0 ? " left" : " over" });
+		budgetTrack(card, b.spent, b.budget, b.key === "day" ? undefined : b.elapsed);
+		card.createDiv({ cls: "sbd-money-period-note", text: `${money(p, b.spent)} of ${money(p, b.budget)} · ${Math.round((b.spent / b.budget) * 100)}%` });
+	}
+}
+
+function shortDate(iso: string): string {
+	const d = new Date(`${iso}T00:00:00`);
+	return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()]} ${d.getDate()}`;
 }
 
 /** A ring gauge: share of budget used, with a tick where you'd be at an even pace. */
@@ -773,17 +814,25 @@ export class MoneySettingsModal extends Modal {
 		const el = this.contentEl;
 		el.empty();
 
-		// The monthly budget — the number that matters most — sits on top.
+		// Budgets — the numbers that matter most — sit on top: daily, weekly, monthly.
 		const budget = el.createDiv({ cls: "sbd-money-budgetbox" });
-		const bl = budget.createEl("label", { cls: "sbd-money-budgetfield" });
-		bl.createSpan({ cls: "sbd-money-flabel", text: "Monthly budget" });
-		const box = bl.createDiv({ cls: "sbd-money-prefixed is-large" });
-		box.createSpan({ text: "₱" });
-		const b = box.createEl("input", { attr: { type: "text", inputmode: "decimal", placeholder: "20,000" } });
-		b.value = m.monthlyBudget ? m.monthlyBudget.toLocaleString("en-PH") : "";
-		b.onchange = async () => { m.monthlyBudget = Math.max(0, Number(b.value.replace(/[₱,\s]/g, "")) || 0); await p.persist(); };
+		budget.createDiv({ cls: "sbd-money-flabel sbd-money-budgettitle", text: "Spending budgets" });
+		const fields = budget.createDiv({ cls: "sbd-money-budgetgrid" });
+		const field = (label: string, key: "dailyBudget" | "weeklyBudget" | "monthlyBudget", hint: () => string) => {
+			const f = fields.createEl("label", { cls: "sbd-money-budgetfield" });
+			f.createSpan({ cls: "sbd-money-flabel", text: label });
+			const box = f.createDiv({ cls: "sbd-money-prefixed is-large" });
+			box.createSpan({ text: "₱" });
+			const input = box.createEl("input", { attr: { type: "text", inputmode: "decimal", placeholder: hint(), "aria-label": `${label} budget` } });
+			input.value = m[key] ? m[key].toLocaleString("en-PH") : "";
+			input.onchange = async () => { m[key] = Math.max(0, Number(input.value.replace(/[₱,\s]/g, "")) || 0); await p.persist(); this.render(); };
+		};
+		const fmt = (n: number) => (n > 0 ? Math.round(n).toLocaleString("en-PH") : "None");
+		field("Daily", "dailyBudget", () => fmt(m.weeklyBudget ? m.weeklyBudget / 7 : m.monthlyBudget ? m.monthlyBudget / 30 : 0));
+		field("Weekly", "weeklyBudget", () => fmt(m.dailyBudget ? m.dailyBudget * 7 : m.monthlyBudget ? (m.monthlyBudget * 7) / 30 : 0));
+		field("Monthly", "monthlyBudget", () => fmt(m.categories.filter((c) => c.kind === "expense").reduce((s, c) => s + (c.budget || 0), 0)));
 		const catTotal = m.categories.filter((c) => c.kind === "expense").reduce((s, c) => s + (c.budget || 0), 0);
-		budget.createDiv({ cls: "sbd-money-help", text: catTotal ? `Category budgets add up to ${money(p, catTotal)}. Leave this empty to use that total.` : "Set an overall budget, a budget per category below, or both." });
+		budget.createDiv({ cls: "sbd-money-help", text: `Grey numbers are suggestions from your other budgets. Each one you set gets its own meter at the top of the Money page.${catTotal ? ` Category budgets add up to ${money(p, catTotal)} a month (used when Monthly is empty).` : ""}` });
 
 		const tabs = el.createDiv({ cls: "sbd-segmented sbd-money-tabs", attr: { role: "tablist" } });
 		for (const [id, label] of [["expense", "Spending categories"], ["income", "Income sources"]] as const) {
