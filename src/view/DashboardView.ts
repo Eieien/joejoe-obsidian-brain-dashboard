@@ -13,12 +13,27 @@ import { defaultHome, renderHomeTab, type HomeState } from "./homeTab";
 import { defaultLibrary, renderLibraryTab, type LibraryState } from "./libraryTab";
 import { renderProjectsTab, type ProjectsState } from "./projectsTab";
 import { renderCoursesTab, type CoursesState } from "./coursesTab";
+import { noiseTile } from "./noise";
+import { pageGlyph } from "./pageIcons";
 import { defaultTaskFilters, renderTasksTab, type TaskFilters } from "./tasksTab";
 import { renderTrackersTab, type TrackersState } from "./trackersTab";
 
 export const VIEW_TYPE_DASHBOARD = "second-brain-dashboard";
 
 export type TabId = "home" | "inbox" | "tasks" | "calendar" | "projects" | "courses" | "notes" | "trackers" | "review" | "library";
+
+/** Page header text for each tab (Home has its own header). */
+const PAGE_INFO: Partial<Record<TabId, { title: string; sub: string; color: string; tagline: string }>> = {
+	inbox: { title: "Inbox", sub: "Process what you captured, one item at a time.", color: "sky", tagline: "clear your mind" },
+	tasks: { title: "Tasks", sub: "Everything to do across your vault.", color: "amber", tagline: "one thing at a time" },
+	calendar: { title: "Calendar", sub: "Deadlines, scheduled tasks and notes, day by day.", color: "rose", tagline: "time, laid out" },
+	projects: { title: "Projects", sub: "Ongoing work and how far along it is.", color: "emerald", tagline: "work in motion" },
+	courses: { title: "Courses", sub: "Your subjects, and what each one needs from you.", color: "indigo", tagline: "learn something today" },
+	notes: { title: "Notes", sub: "Capture ideas, connect them, and revisit old ones.", color: "violet", tagline: "ideas, connected" },
+	trackers: { title: "Trackers", sub: "Habits, money and anything else you measure.", color: "teal", tagline: "small steps, counted" },
+	review: { title: "Weekly review", sub: "Look back on the week and plan the next.", color: "orange", tagline: "look back, plan ahead" },
+	library: { title: "Library", sub: "Every note in your vault, A to Z.", color: "brown", tagline: "everything you know" },
+};
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
 	{ id: "home", label: "home", icon: "home" },
@@ -177,18 +192,39 @@ export class DashboardView extends ItemView {
 			openCalendarDay: (date) => new DayModal(this.app, ctx, date).open(),
 			renderMarkdown: (md, el, sourcePath) => void MarkdownRenderer.render(this.app, md, el, sourcePath, this),
 			openTrackers: () => this.navigate("trackers", { trackers: { selected: undefined, focus: undefined } }),
+			openMoney: () => this.navigate("trackers", { trackers: { selected: "__money" } } as never),
+			openTasks: (filters) => this.navigate("tasks", { tasks: filters } as never),
 			rerender: () => this.render(),
 			addInterval: (id) => this.intervals.push(id),
 			addCleanup: (fn) => this.cleanups.push(fn),
 		};
 
-		// ---- Header: tabs + actions ----
-		const header = root.createDiv({ cls: "sbd-header" });
+		// ---- Sidebar navigation ----
+		const a = this.plugin.settings.appearance;
+		root.addClass("has-sidebar");
+		root.toggleClass("is-collapsed", !!a.sidebarCollapsed);
+		root.toggleClass("has-grid", a.grid === true);
+		if (a.noise) {
+			const n = a.noiseOptions ?? { intensity: 6, size: 160, speed: 1 };
+			const grain = root.createDiv({ cls: "sbd-noise", attr: { "aria-hidden": "true" } });
+			grain.style.backgroundImage = `url("${noiseTile()}")`;
+			grain.style.setProperty("--sbd-noise-opacity", String(Math.max(1, n.intensity) / 100));
+			grain.style.backgroundSize = `${n.size}px ${n.size}px`;
+			if (n.speed > 0) grain.style.animationDuration = `${(1.6 / n.speed).toFixed(2)}s`;
+			else grain.style.animation = "none";
+		}
+		const header = root.createDiv({ cls: "sbd-header sbd-sidebar", attr: { role: "navigation", "aria-label": "Dashboard" } });
+		const brand = header.createDiv({ cls: "sbd-side-brand" });
+		const collapse = brand.createEl("button", { cls: "sbd-icon-btn clickable-icon sbd-side-collapse", attr: { "aria-label": a.sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar", "aria-expanded": String(!a.sidebarCollapsed) } });
+		setIcon(collapse, a.sidebarCollapsed ? "panel-left-open" : "panel-left-close");
+		collapse.onclick = async () => { a.sidebarCollapsed = !a.sidebarCollapsed; await this.plugin.persist(); this.render(); };
+		brand.createSpan({ cls: "sbd-side-title", text: a.title || "dashboard" });
 		const tabs = header.createDiv({ cls: "sbd-tabs" });
 		for (const t of TABS) {
-			const b = tabs.createEl("button", { cls: `sbd-tab ${this.state.tab === t.id ? "is-active" : ""}` });
-			setIcon(b.createSpan({ cls: "sbd-icon" }), t.icon);
-			b.createSpan({ text: t.label });
+			const b = tabs.createEl("button", { cls: `sbd-tab ${this.state.tab === t.id ? "is-active" : ""}`, attr: { "aria-label": t.label, "aria-current": this.state.tab === t.id ? "page" : "false" } });
+			const tabIcon = b.createSpan({ cls: `sbd-icon sbd-c-${PAGE_INFO[t.id]?.color ?? "amber"}` });
+			if (!pageGlyph(tabIcon, t.id)) setIcon(tabIcon, t.icon);
+			b.createSpan({ cls: "sbd-tab-label", text: t.label });
 			if (t.id === "inbox" && this.plugin.index.ready) {
 				const n = inboxItems(ctx).length;
 				if (n) b.createSpan({ cls: "sbd-tab-badge", text: String(n) });
@@ -196,9 +232,9 @@ export class DashboardView extends ItemView {
 			b.onclick = () => this.navigate(t.id, t.id === "projects" ? { projects: { selected: undefined } } : t.id === "courses" ? { courses: { selected: undefined } } : t.id === "trackers" ? { trackers: { selected: undefined } } : {});
 		}
 		const actions = header.createDiv({ cls: "sbd-header-actions" });
-		const capture = actions.createEl("button", { cls: "sbd-capture-btn" });
+		const capture = actions.createEl("button", { cls: "sbd-capture-btn", attr: { "aria-label": "Create task (Ctrl+Alt+N)", title: "Create task · Ctrl/Cmd+Alt+N" } });
 		setIcon(capture.createSpan({ cls: "sbd-icon" }), "plus");
-		capture.createSpan({ text: "capture" });
+		capture.createSpan({ cls: "sbd-tab-label", text: "new task" });
 		capture.onclick = () => new CaptureModal(this.app, this.plugin).open();
 		const refresh = actions.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { "aria-label": "Rebuild index" } });
 		setIcon(refresh, "refresh-cw");
@@ -217,6 +253,18 @@ export class DashboardView extends ItemView {
 			if (px.transitions && this.lastTab !== null) dissolveIn(content, px.size);
 		}
 		this.lastTab = this.state.tab;
+
+		// Every page but Home gets a header saying where you are.
+		if (this.state.tab !== "home") {
+			const meta = TABS.find((t) => t.id === this.state.tab);
+			const info = PAGE_INFO[this.state.tab];
+			const head = inner.createDiv({ cls: "sbd-pagehead" });
+			const ic = head.createDiv({ cls: `sbd-pagehead-icon sbd-c-${info?.color ?? "gray"}` });
+			if (!pageGlyph(ic, this.state.tab)) setIcon(ic, meta?.icon ?? "file");
+			const txt = head.createDiv({ cls: "sbd-pagehead-text" });
+			txt.createEl("h1", { cls: "sbd-pagehead-title", text: info?.title ?? meta?.label ?? "" });
+			if (info?.sub) txt.createDiv({ cls: "sbd-pagehead-sub", text: info.sub });
+		}
 
 		switch (this.state.tab) {
 			case "home":

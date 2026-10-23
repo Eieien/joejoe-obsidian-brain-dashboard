@@ -27,6 +27,8 @@ async function boot(): Promise<void> {
 	if (params.get("rot")) plugin.settings.appearance.bannerRotate = Number(params.get("rot"));
 	if (params.get("bx")) plugin.settings.appearance.bannerX = Number(params.get("bx"));
 	if (params.get("zoom")) plugin.settings.appearance.bannerZoom = Number(params.get("zoom"));
+	if (params.get("translucent")) { document.body.classList.add("is-translucent"); document.body.style.background = "url(../../demo-vault/_images/test-photo.jpg) center/cover"; }
+	if (params.get("glass")) { { const lf = document.getElementById("leaf")!; const wrap = document.createElement("div"); wrap.className = "app-container"; wrap.style.cssText = "position:fixed;inset:0"; lf.parentElement!.insertBefore(wrap, lf); wrap.appendChild(lf); } plugin.settings.appearance.glass.enabled = true; plugin.settings.appearance.glass.wallpaper = params.get("glass") === "1" ? "" : params.get("glass")!; await plugin.persist(); window.setTimeout(() => { const l = document.getElementById("leaf")!; const r = l.querySelector(".sbd-root") as HTMLElement; console.log("GLASS", document.body.className, "|", getComputedStyle(l).backgroundImage.slice(0,120), "|", getComputedStyle(r).backgroundColor, "|", encodeURIComponent(document.body.style.getPropertyValue("--sbd-wallpaper")).slice(0,200)); }, 500); }
 	if (params.get("style")) plugin.settings.appearance.style = params.get("style") as never;
 	if (params.get("cover")) plugin.settings.appearance.coverStyle = params.get("cover") as never;
 	if (params.get("palette")) plugin.settings.appearance.pixel.palette = params.get("palette") as never;

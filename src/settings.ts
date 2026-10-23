@@ -7,6 +7,8 @@ import type { TaskFilters } from "./view/tasksTab";
 import { DEFAULT_SECRETS, defaultSecretsPath, secretsSupported, type SecretsSettings } from "./secrets/store";
 import { DEFAULT_MONEY_CATEGORIES } from "./data/ledger";
 import type { MoneySettings } from "./data/ledgerStore";
+import { DEFAULT_GLASS, type GlassSettings } from "./view/glass";
+import { ImagePickerModal } from "./view/pickers";
 
 export interface SavedView {
 	name: string;
@@ -54,11 +56,12 @@ export interface QuickLink {
 	target: string;
 }
 
-export type HomeSectionId = "quicklinks" | "todo" | "habits" | "widgets" | "notebook" | "lab";
+export type HomeSectionId = "quicklinks" | "todo" | "money" | "habits" | "widgets" | "notebook" | "lab";
 
 export const HOME_SECTIONS: { id: HomeSectionId; label: string }[] = [
 	{ id: "quicklinks", label: "Quick links" },
 	{ id: "todo", label: "Things to do, stats & upcoming" },
+	{ id: "money", label: "Money: spending & budgets" },
 	{ id: "notebook", label: "Notebook & projects" },
 	{ id: "habits", label: "Habits" },
 	{ id: "widgets", label: "Widgets & images" },
@@ -102,7 +105,7 @@ export function styleClasses(a: AppearanceSettings): string[] {
 
 export type PageStyle = "mono" | "gallery" | "theme";
 /** full: image across the top · panels: split b&w strip · hero: image blended into the page, title beside it. */
-export type CoverStyle = "full" | "panels" | "hero";
+export type CoverStyle = "full" | "panels" | "hero" | "editorial";
 
 export interface AppearanceSettings {
 	title: string;
@@ -129,6 +132,20 @@ export interface AppearanceSettings {
 	countdownLabel: string;
 	showTimeProgress: boolean;
 	showClock: boolean;
+	/** Navigation as a sidebar collapsed to icons. */
+	sidebarCollapsed: boolean;
+	/** Animated film-grain noise over the dashboard background. */
+	noise: boolean;
+	/** Grain intensity (%), size (px) and movement speed (0 = still). */
+	noiseOptions: { intensity: number; size: number; speed: number };
+	/** Faint square grid behind the dashboard. */
+	grid: boolean;
+	/** Glass mode: a wallpaper behind all of Obsidian with frosted panes. */
+	glass: GlassSettings;
+	/** Header image per page (tab id → vault path or URL). */
+	pageImages?: Record<string, string>;
+	/** "At a glance" row in the page header. */
+	glance: { greeting: boolean; date: boolean; tasks: boolean; money: boolean; deadline: boolean };
 	images: HomeImage[];
 	pixel: PixelEffects;
 	/** Home sections in display order; `hidden` ones are skipped. */
@@ -249,6 +266,13 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
 		countdownLabel: "",
 		showTimeProgress: true,
 		showClock: true,
+		sidebarCollapsed: false,
+		noise: false,
+		noiseOptions: { intensity: 6, size: 160, speed: 1 },
+		grid: false,
+		glass: DEFAULT_GLASS,
+		pageImages: {},
+		glance: { greeting: true, date: true, tasks: true, money: true, deadline: true },
 		images: [],
 		pixel: { field: true, transitions: true, size: 3, palette: "theme" },
 		layout: HOME_SECTIONS.map((x) => ({ id: x.id, hidden: false })),
@@ -263,7 +287,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
 	trackers: DEFAULT_TRACKERS,
 	kanbanBoard: "",
 	projectDescriptions: {},
-	settingsVersion: 2,
+	settingsVersion: 3,
 	inboxFolder: "Inbox",
 	zettelFolder: "Zettel",
 	sourcesFolder: "Sources",
@@ -479,6 +503,43 @@ export class DashboardSettingTab extends PluginSettingTab {
 	private renderAppearance(containerEl: HTMLElement, save: () => Promise<void>): void {
 		const a = this.plugin.settings.appearance;
 		new Setting(containerEl).setName("Appearance").setHeading();
+
+		const g = a.glass;
+		const glassSave = async () => { await this.plugin.persist(); };
+		new Setting(containerEl).setName("Glass mode")
+			.setDesc("Puts a wallpaper behind all of Obsidian and frosts every pane on top of it — a see-through look that works on any system.")
+			.addToggle((t) => t.setValue(g.enabled).onChange(async (v) => { g.enabled = v; await glassSave(); this.display(); }));
+		if (g.enabled) {
+			new Setting(containerEl).setName("Wallpaper").setDesc(g.wallpaper ? g.wallpaper : "Using your dashboard cover image.")
+				.addButton((b) => b.setButtonText("Choose image").onClick(() => new ImagePickerModal(this.app, {
+					title: "Glass wallpaper",
+					onPick: async (src) => { g.wallpaper = src; await glassSave(); this.display(); },
+					onRemove: g.wallpaper ? async () => { g.wallpaper = ""; await glassSave(); this.display(); } : undefined,
+				}).open()));
+			new Setting(containerEl).setName("Frost").setDesc("How blurry the wallpaper is behind panes.")
+				.addSlider((s) => s.setLimits(0, 60, 2).setValue(g.blur).setDynamicTooltip().onChange(async (v) => { g.blur = v; await glassSave(); }));
+			new Setting(containerEl).setName("Tint").setDesc("Neutral lets the wallpaper's own colours through; Cool and Warm add a hint of colour.")
+				.addDropdown((d) => d.addOption("neutral", "Neutral").addOption("cool", "Cool").addOption("warm", "Warm (espresso)")
+					.setValue(g.tint ?? "neutral").onChange(async (v) => { g.tint = v as typeof g.tint; await glassSave(); }));
+			new Setting(containerEl).setName("Pane opacity").setDesc("Editor, sidebars and the dashboard page. Lower = more see-through.")
+				.addSlider((s) => s.setLimits(0, 100, 2).setValue(g.opacity).setDynamicTooltip().onChange(async (v) => { g.opacity = v; await glassSave(); }));
+			new Setting(containerEl).setName("Card opacity").setDesc("Cards, panels and popups on top of the panes.")
+				.addSlider((s) => s.setLimits(0, 100, 2).setValue(g.cardOpacity ?? 40).setDynamicTooltip().onChange(async (v) => { g.cardOpacity = v; await glassSave(); }));
+			new Setting(containerEl).setName("Dim wallpaper").setDesc("Darkens (or, in light mode, lightens) the wallpaper so text stays readable.")
+				.addSlider((s) => s.setLimits(0, 90, 5).setValue(g.dim).setDynamicTooltip().onChange(async (v) => { g.dim = v; await glassSave(); }));
+		}
+
+		const n = a.noiseOptions;
+		new Setting(containerEl).setName("Background noise").setDesc("Film grain over the dashboard.")
+			.addToggle((t) => t.setValue(a.noise).onChange(async (v) => { a.noise = v; await this.plugin.persist(); this.plugin.refreshViews(); this.display(); }));
+		if (a.noise) {
+			new Setting(containerEl).setName("Noise intensity").setDesc("How visible the grain is (%).")
+				.addSlider((s) => s.setLimits(1, 30, 1).setValue(n.intensity).setDynamicTooltip().onChange(async (v) => { n.intensity = v; await this.plugin.persist(); this.plugin.refreshViews(); }));
+			new Setting(containerEl).setName("Grain size").setDesc("Larger = coarser grain (px).")
+				.addSlider((s) => s.setLimits(60, 400, 10).setValue(n.size).setDynamicTooltip().onChange(async (v) => { n.size = v; await this.plugin.persist(); this.plugin.refreshViews(); }));
+			new Setting(containerEl).setName("Movement").setDesc("How fast the grain shifts. 0 = still.")
+				.addSlider((s) => s.setLimits(0, 4, 0.25).setValue(n.speed).setDynamicTooltip().onChange(async (v) => { n.speed = v; await this.plugin.persist(); this.plugin.refreshViews(); }));
+		}
 
 		new Setting(containerEl)
 			.setName("Style")

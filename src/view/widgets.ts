@@ -1,6 +1,6 @@
 import { getIcon, moment, Notice, setIcon, TFile, TFolder } from "obsidian";
 import { calendarItems, monthGrid } from "../data/calendar";
-import { deadlines } from "../data/queries";
+import { deadlines, isOpen, isOverdue } from "../data/queries";
 import { PILL_COLORS, type HomeImage, type QuickLink } from "../settings";
 import type { DashboardContext } from "./components";
 import { HomeLayoutModal, QuickLinksModal, QuoteModal } from "./homeEdit";
@@ -8,6 +8,8 @@ import { pixelField } from "./dither";
 import { IconPickerModal, imageSrc, ImagePickerModal, isImagePath } from "./pickers";
 import { landscapeCover } from "./cover";
 import { applyCoverView, coverToolbar, coverView } from "./coverControls";
+import { moneyLeftToday } from "./moneyView";
+import { renderPageHead } from "./pageHead";
 
 async function saveUi(ctx: DashboardContext): Promise<void> {
 	await ctx.plugin.persist();
@@ -31,6 +33,7 @@ export function pageHeader(parent: HTMLElement, ctx: DashboardContext): void {
 	const hero = style === "hero" && !!a.banner;
 	const panels = style === "panels";
 
+	if (style === "editorial") { editorialHome(top, ctx); return; }
 	if (hero) heroCover(top, ctx);
 	else if (panels) galleryCover(top, ctx);
 	else if (a.banner) {
@@ -73,6 +76,8 @@ export function pageHeader(parent: HTMLElement, ctx: DashboardContext): void {
 		input.onblur = () => done(true);
 	};
 
+	glanceRow(head, ctx);
+
 	if (a.showQuote && a.quotes.length) {
 		const dayIndex = Math.floor(Date.parse(ctx.today) / 86_400_000);
 		const q = head.createDiv({ cls: "sbd-quote" });
@@ -95,13 +100,16 @@ function heroCover(top: HTMLElement, ctx: DashboardContext): void {
 	const frame = band.createDiv({ cls: "sbd-hero-frame" });
 	const src = imageSrc(ctx.app, a.banner);
 	if (src) {
+		// Light mode: two extra copies stacked under the image restore the strength that the
+		// transparent (knocked-out) parts lose on a pale page. Hidden in dark mode.
+		const boosts = [0, 1].map(() => frame.createEl("img", { cls: "sbd-hero-img is-boost", attr: { src, alt: "", draggable: "false", "aria-hidden": "true" } }));
 		const img = frame.createEl("img", { cls: "sbd-hero-img", attr: { src, alt: "", draggable: "false" } });
 		const view = coverView(a);
-		applyCoverView(img, view, "object");
-		img.addEventListener("load", () => { band.addClass("is-loaded"); applyCoverView(img, view, "object"); }, { once: true });
+		for (const el of [...boosts, img]) applyCoverView(el, view, "object");
+		img.addEventListener("load", () => { band.addClass("is-loaded"); for (const el of [...boosts, img]) applyCoverView(el, view, "object"); }, { once: true });
 		if (img.complete) band.addClass("is-loaded");
 	}
-	const img = frame.querySelector<HTMLImageElement>("img");
+	const img = frame.querySelector<HTMLImageElement>("img.sbd-hero-img:not(.is-boost)");
 	coverToolbar(band, ctx, img ? { surface: band, layer: img, mode: "object" } : undefined);
 }
 
@@ -120,6 +128,77 @@ function galleryCover(top: HTMLElement, ctx: DashboardContext): void {
 	for (let i = 1; i < 5; i++) strip.createDiv({ cls: "sbd-panel-gap", attr: { style: `left: ${i * 20}%` } });
 
 	coverToolbar(band, ctx, { surface: strip, layer, mode: "background" });
+}
+
+/** At a glance: greeting, date, tasks due, money left, next deadline — each optional. */
+function glanceRow(head: HTMLElement, ctx: DashboardContext): void {
+	const g = ctx.plugin.settings.appearance.glance;
+	if (!g || !Object.values(g).some(Boolean)) return;
+	const row = head.createDiv({ cls: "sbd-glance" });
+	const chip = (icon: string, text: string, onClick?: () => void, cls = "") => {
+		const el = row.createEl(onClick ? "button" : "span", { cls: `sbd-glance-chip ${cls}` });
+		setIcon(el.createSpan({ cls: "sbd-icon" }), icon);
+		el.createSpan({ text });
+		if (onClick) el.addEventListener("click", onClick);
+		return el;
+	};
+	const now = moment();
+	if (g.greeting) {
+		const h = now.hour();
+		row.createSpan({ cls: "sbd-glance-greet", text: h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening" });
+	}
+	if (g.date) chip("calendar", now.format("dddd, MMMM D"), () => ctx.openCalendarDay(ctx.today));
+	if (g.tasks) {
+		const open = ctx.plugin.index.tasks.filter(isOpen);
+		const due = open.filter((t) => t.due === ctx.today).length;
+		const late = open.filter((t) => isOverdue(t, ctx.today)).length;
+		chip("check-square", `${due} due today${late ? ` · ${late} overdue` : ""}`, () => ctx.openTasks?.({ due: late ? "overdue" : "today", view: "list" }), late ? "is-warn" : "");
+	}
+	if (g.money) {
+		const el = chip("wallet", "…", () => ctx.openMoney?.());
+		void moneyLeftToday(ctx).then((t) => { if (t) el.lastElementChild?.setText(t); else el.remove(); });
+	}
+	if (g.deadline) {
+		const next = deadlines(ctx.plugin.index.tasks, [...ctx.plugin.index.projects.values()], [...ctx.plugin.index.notes.values()], ctx.today, 60)
+			.filter((d) => d.date >= ctx.today).sort((a, b) => a.date.localeCompare(b.date))[0];
+		if (next) {
+			const days = moment(next.date).diff(moment(ctx.today), "days");
+			chip("flag", `${next.title.length > 34 ? next.title.slice(0, 33) + "…" : next.title} · ${days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}`, () => ctx.openPath(next.path, next.line));
+		}
+	}
+}
+
+/** Home in the editorial layout: the same header as the other pages, with your cover, title and quote. */
+function editorialHome(top: HTMLElement, ctx: DashboardContext): void {
+	const a = ctx.plugin.settings.appearance;
+	const now = moment();
+	const h = now.hour();
+	const greeting = h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+	const dayIndex = Math.floor(Date.parse(ctx.today) / 86_400_000);
+	const quote = a.showQuote && a.quotes.length ? a.quotes[dayIndex % a.quotes.length] : "make today count";
+	const wrap = top.createDiv({ cls: "sbd-page-head sbd-home-editorial" });
+	const head = renderPageHead(wrap, ctx, { tab: "home", title: a.title || "second brain", sub: `${greeting} — ${now.format("dddd, MMMM D")}`, tagline: quote, color: "amber", icon: "home" }, {
+		image: a.banner || undefined,
+		imagePosition: a.bannerPosition ?? 50,
+		controls: (band, ph) => {
+			const host = ph.createDiv({ cls: "sbd-ph-toolbar" });
+			coverToolbar(host, ctx);
+			const custom = host.createEl("button", { cls: "sbd-cover-btn", attr: { "aria-label": "Customize page" } });
+			setIcon(custom.createSpan({ cls: "sbd-icon" }), "layout-template");
+			custom.createSpan({ text: "Customize" });
+			custom.onclick = () => new HomeLayoutModal(ctx.app, ctx.plugin, () => ctx.rerender()).open();
+			void band;
+		},
+		asyncFacts: [
+			moneyLeftToday(ctx),
+			Promise.resolve((() => {
+				const next = deadlines(ctx.plugin.index.tasks, [...ctx.plugin.index.projects.values()], [...ctx.plugin.index.notes.values()], ctx.today, 60)
+					.filter((d) => d.date > ctx.today).sort((x, y) => x.date.localeCompare(y.date))[0];
+				return next ? `next: ${next.title.length > 28 ? next.title.slice(0, 27) + "…" : next.title} ${moment(next.date).format("M.DD")}` : null;
+			})()),
+		],
+	});
+	head.addClass("is-home");
 }
 
 function pageIcon(el: HTMLElement, ctx: DashboardContext, icon: string): void {

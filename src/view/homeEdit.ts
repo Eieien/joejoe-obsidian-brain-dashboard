@@ -145,6 +145,15 @@ export class HomeLayoutModal extends Modal {
 			s.addToggle((t) => t.setValue(!item.hidden).onChange((v) => { item.hidden = !v; }));
 		});
 
+		new Setting(contentEl).setName("Page header").setHeading();
+		contentEl.createDiv({ cls: "sbd-modal-help", text: "The top of Home: cover image, title, quote, and an at-a-glance row." });
+		const gl = a.glance;
+		new Setting(contentEl).setName("Greeting").addToggle((t) => t.setValue(gl.greeting).onChange((v) => { gl.greeting = v; }));
+		new Setting(contentEl).setName("Today's date").addToggle((t) => t.setValue(gl.date).onChange((v) => { gl.date = v; }));
+		new Setting(contentEl).setName("Tasks due today").addToggle((t) => t.setValue(gl.tasks).onChange((v) => { gl.tasks = v; }));
+		new Setting(contentEl).setName("Money left today").addToggle((t) => t.setValue(gl.money).onChange((v) => { gl.money = v; }));
+		new Setting(contentEl).setName("Next deadline").addToggle((t) => t.setValue(gl.deadline).onChange((v) => { gl.deadline = v; }));
+
 		new Setting(contentEl).setName("Widgets").setHeading();
 		new Setting(contentEl).setName("Countdown").addToggle((t) => t.setValue(a.showCountdown).onChange((v) => { a.showCountdown = v; }));
 		new Setting(contentEl).setName("Countdown target").setDesc("Empty date = next deadline.")
@@ -156,6 +165,9 @@ export class HomeLayoutModal extends Modal {
 
 		new Setting(contentEl).setName("Pixel effects").setHeading();
 		const px = a.pixel;
+		new Setting(contentEl).setName("Glass mode").setDesc("Wallpaper behind all of Obsidian with frosted panes. Wallpaper and strength are in the plugin settings.").addToggle((t) => t.setValue(a.glass.enabled).onChange((v) => { a.glass.enabled = v; }));
+		new Setting(contentEl).setName("Background grid").setDesc("Faint square grid behind the pages.").addToggle((t) => t.setValue(a.grid === true).onChange((v) => { a.grid = v; }));
+		new Setting(contentEl).setName("Background noise").setDesc("Animated film grain over the dashboard.").addToggle((t) => t.setValue(a.noise).onChange((v) => { a.noise = v; }));
 		new Setting(contentEl).setName("Pixel field widget").addToggle((t) => t.setValue(px.field).onChange((v) => { px.field = v; }));
 		new Setting(contentEl).setName("Dissolve transitions").addToggle((t) => t.setValue(px.transitions).onChange((v) => { px.transitions = v; }));
 		new Setting(contentEl).setName("Pixel size").addSlider((sl) => sl.setLimits(2, 8, 1).setValue(px.size).setDynamicTooltip().onChange((v) => { px.size = v; }));

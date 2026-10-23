@@ -13,6 +13,7 @@ import { SecretsStore } from "./secrets/store";
 import { SecretsModal } from "./secrets/SecretsModal";
 import { LedgerStore } from "./data/ledgerStore";
 import { TxModal } from "./view/moneyView";
+import { applyGlass, clearGlass } from "./view/glass";
 
 /** UI state that must survive dashboard re-renders (but not app restarts). */
 interface UiState {
@@ -38,6 +39,8 @@ export default class SecondBrainPlugin extends Plugin {
 		const adapter = this.app.vault.adapter;
 		this.secrets = new SecretsStore(() => this.settings.secrets, () => (adapter instanceof FileSystemAdapter ? adapter.getBasePath() : null));
 		this.register(() => this.secrets.destroy());
+		applyGlass(this);
+		this.register(clearGlass);
 		// Tracker entries are recomputed lazily after any vault change.
 		this.ledger = new LedgerStore(this.app, () => this.settings.money);
 		this.registerEvent(this.index.on("updated", () => { this.trackers.invalidate(); this.ledger.invalidate(); }));
@@ -61,6 +64,8 @@ export default class SecondBrainPlugin extends Plugin {
 			this.addCommand({ id: `new-${kind}-note`, name: `New ${kind} note`, callback: () => new NewNoteModal(this.app, this, kind, (p) => void this.app.workspace.openLinkText(p, "", true)).open() });
 		}
 		this.addCommand({ id: "quick-capture", name: "Quick capture", callback: () => new CaptureModal(this.app, this).open() });
+		this.addCommand({ id: "create-task", name: "Create task", hotkeys: [{ modifiers: ["Mod", "Alt"], key: "n" }], callback: () => new CaptureModal(this.app, this).open() });
+		this.addRibbonIcon("square-check-big", "Create task", () => new CaptureModal(this.app, this).open());
 		this.registerDitherBlock();
 		this.addCommand({ id: "log-expense", name: "Log expense", callback: () => new TxModal(this.app, this, { type: "expense" }, () => this.refreshViews()).open() });
 		this.addCommand({ id: "log-income", name: "Log income", callback: () => new TxModal(this.app, this, { type: "income" }, () => this.refreshViews()).open() });
@@ -114,7 +119,7 @@ export default class SecondBrainPlugin extends Plugin {
 			habits: data?.habits ?? d.habits,
 			kanbanBoard: data?.kanbanBoard ?? "",
 			projectDescriptions: data?.projectDescriptions ?? {},
-			settingsVersion: 2,
+			settingsVersion: 3,
 			reviewChecklist: data?.reviewChecklist ?? d.reviewChecklist,
 			reviews: data?.reviews ?? {},
 			savedViews: data?.savedViews ?? [],
@@ -134,6 +139,15 @@ export default class SecondBrainPlugin extends Plugin {
 				layout.splice(layout.findIndex((l) => l.id === "todo") + 1, 0, item);
 			}
 		}
+
+		// v3: the Money section sits right below "things to do".
+		if ((data?.settingsVersion ?? 1) < 3 && data?.appearance?.layout && !s.appearance.layout.some((l) => l.id === "money")) {
+			const layout = s.appearance.layout;
+			layout.splice(layout.findIndex((l) => l.id === "todo") + 1, 0, { id: "money", hidden: false });
+		}
+		s.appearance.glance = { ...d.appearance.glance, ...(data?.appearance?.glance ?? {}) };
+		s.appearance.glass = { ...d.appearance.glass, ...(data?.appearance?.glass ?? {}) };
+		s.appearance.noiseOptions = { ...d.appearance.noiseOptions, ...(data?.appearance?.noiseOptions ?? {}) };
 
 		// Earlier versions kept habits as a "daily" tracker; move its yes/no fields into habits.
 		if (!data?.habits && data?.trackers) {
@@ -188,10 +202,12 @@ export default class SecondBrainPlugin extends Plugin {
 	/** Save without re-indexing — for UI-only state like card order. */
 	async persist(): Promise<void> {
 		await this.saveData(this.settings);
+		applyGlass(this);
 	}
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+		applyGlass(this);
 		this.trackers?.invalidate();
 		if (this.index?.ready) this.rebuildSoon();
 	}

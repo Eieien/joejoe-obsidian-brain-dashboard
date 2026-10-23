@@ -1,4 +1,5 @@
 import { moment, setIcon } from "obsidian";
+import { moneyHomeSection } from "./moneyView";
 import { appendToFile, dailyDate, getDailyConfig, getOrCreateDaily } from "../data/daily";
 import { deadlines, isClosedStatus, isDueToday, isOpen, isOverdue, isUrgent, projectStats, sortTasks, startOfWeek } from "../data/queries";
 import { buildTaskLine } from "../data/taskParser";
@@ -30,6 +31,7 @@ export function renderHomeTab(el: HTMLElement, ctx: DashboardContext, st: HomeSt
 		switch (item.id) {
 			case "quicklinks": quickLinks(page, ctx); break;
 			case "todo": renderTodo(page, ctx, st, update, goToTasks); break;
+			case "money": moneyHomeSection(page, ctx); break;
 			case "habits": renderHabitsSection(page, ctx, st, update); break;
 			case "widgets": renderWidgets(page, ctx); break;
 			case "notebook": renderNotebookSplit(page, ctx, st, update); break;

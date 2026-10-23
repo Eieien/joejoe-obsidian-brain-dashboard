@@ -42,7 +42,7 @@ function renderCourseGrid(el: HTMLElement, ctx: DashboardContext, st: CoursesSta
 
 	const head = el.createDiv({ cls: "sbd-courses-head" });
 	const titles = head.createDiv({ cls: "sbd-courses-titles" });
-	titles.createEl("h2", { cls: "sbd-courses-title", text: s.currentTerm || "Courses" });
+	titles.createEl("h2", { cls: "sbd-courses-title", text: s.currentTerm || "This semester" });
 	const openTasks = active.reduce((n, c) => n + p.index.tasksForProject(c.key).filter(isOpen).length, 0);
 	titles.createDiv({ cls: "sbd-muted", text: `${active.length} active ${active.length === 1 ? "course" : "courses"} · ${openTasks} open ${openTasks === 1 ? "task" : "tasks"}${inactive.length ? ` · ${inactive.length} inactive` : ""}` });
 	const actions = head.createDiv({ cls: "sbd-courses-actions" });
@@ -63,7 +63,7 @@ function renderCourseGrid(el: HTMLElement, ctx: DashboardContext, st: CoursesSta
 		return;
 	}
 
-	section(el, ctx, "This semester", active, update, "Nothing active. Use Plan semester to choose this term's courses.");
+	section(el, ctx, "", active, update, "Nothing active. Use Plan semester to choose this term's courses.");
 	const tog = el.createEl("button", { cls: "sbd-courses-toggle" });
 	setIcon(tog.createSpan({ cls: "sbd-icon" }), st.showInactive ? "chevron-down" : "chevron-right");
 	tog.createSpan({ text: `Not this semester (${inactive.length})` });

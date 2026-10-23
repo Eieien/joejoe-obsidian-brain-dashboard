@@ -399,3 +399,53 @@ body { --font-code-gallery: "Cascadia Mono", "Cascadia Code", Consolas, "JetBrai
 
 /* code inside a block: no inline-code chip */
 .markdown-rendered pre code { color: var(--code-normal); background: none !important; box-shadow: none !important; padding: 0 !important; font-size: inherit; border-radius: 0; }
+
+
+/* ==========================================================================
+   Glass — frosted popovers always; see-through surfaces with
+   Settings → Appearance → Translucent window (Windows / macOS)
+   ========================================================================== */
+body { --glass-blur: blur(22px) saturate(150%); }
+.theme-dark { --glass-tint: rgba(38, 35, 30, 0.72); --glass-tint-strong: rgba(30, 28, 24, 0.86); --glass-edge: rgba(236, 226, 206, 0.12); }
+.theme-light { --glass-tint: rgba(246, 241, 232, 0.72); --glass-tint-strong: rgba(246, 241, 232, 0.88); --glass-edge: rgba(255, 255, 255, 0.6); }
+
+.modal, .prompt, .menu, .suggestion-container, .popover.hover-popover, .notice {
+	background-color: var(--glass-tint-strong) !important;
+	backdrop-filter: var(--glass-blur);
+	-webkit-backdrop-filter: var(--glass-blur);
+	border: 1px solid var(--glass-edge);
+}
+.modal-container .modal-bg { backdrop-filter: blur(3px); }
+
+/* Translucent window: let the desktop through, frosted */
+.is-translucent:not(.is-fullscreen) {
+	--background-primary: rgba(38, 35, 30, 0.58);
+	--background-primary-alt: rgba(46, 42, 36, 0.55);
+	--background-secondary: rgba(27, 25, 21, 0.42);
+	--background-secondary-alt: rgba(20, 18, 15, 0.34);
+	--titlebar-background: transparent;
+	--titlebar-background-focused: transparent;
+	--ribbon-background: transparent;
+	--ribbon-background-collapsed: transparent;
+	--tab-container-background: transparent;
+	--status-bar-background: transparent;
+	--code-background: rgba(16, 16, 16, 0.62);
+}
+.theme-light.is-translucent:not(.is-fullscreen) {
+	--background-primary: rgba(248, 244, 236, 0.62);
+	--background-primary-alt: rgba(240, 233, 220, 0.6);
+	--background-secondary: rgba(236, 230, 218, 0.45);
+	--background-secondary-alt: rgba(228, 220, 205, 0.38);
+	--code-background: rgba(248, 248, 248, 0.7);
+}
+.is-translucent:not(.is-fullscreen) .app-container,
+.is-translucent:not(.is-fullscreen) .horizontal-main-container,
+.is-translucent:not(.is-fullscreen) .workspace,
+.is-translucent:not(.is-fullscreen) .workspace-split.mod-root,
+.is-translucent:not(.is-fullscreen) .workspace-tabs .workspace-leaf { background: transparent; }
+.is-translucent:not(.is-fullscreen) .workspace-split.mod-left-split,
+.is-translucent:not(.is-fullscreen) .workspace-split.mod-right-split,
+.is-translucent:not(.is-fullscreen) .workspace-ribbon { background: var(--background-secondary-alt); }
+.is-translucent:not(.is-fullscreen) .workspace-leaf-content,
+.is-translucent:not(.is-fullscreen) .view-header,
+.is-translucent:not(.is-fullscreen) .view-content { background: var(--background-primary); }

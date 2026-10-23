@@ -9,7 +9,7 @@ import {
 	type MoneyCategory, type MonthSummary, type Tx, type TxType,
 } from "../data/ledger";
 import { styleClasses } from "../settings";
-import { whenLoaded, type DashboardContext } from "./components";
+import { section, whenLoaded, type DashboardContext } from "./components";
 
 export interface MoneyState { month?: string; filter: "all" | TxType; category?: string; query: string }
 
@@ -148,6 +148,110 @@ function budgetTrack(parent: HTMLElement, spent: number, budget: number, pace?: 
 	t.createDiv({ cls: "sbd-money-track-fill", attr: { style: `width: ${Math.min(pct, 1) * 100}%` } });
 	if (pace !== undefined && pace > 0 && pace < 1) t.createDiv({ cls: "sbd-money-track-pace", attr: { style: `left: ${pace * 100}%`, title: "Where spending would be if spread evenly" } });
 	return t;
+}
+
+// ---------------------------------------------------------------- Home dashboard section
+
+/** Home: total spent, budget meters, today's allowance, recent spending, quick add. */
+export function moneyHomeSection(page: HTMLElement, ctx: DashboardContext): void {
+	const p = ctx.plugin;
+	const month = ctx.today.slice(0, 7);
+	const sec = section(page, { title: "money", icon: "wallet", action: { label: "Open money", icon: "arrow-up-right", onClick: () => ctx.openMoney?.() } });
+	whenLoaded(sec, Promise.all([p.ledger.month(month), p.ledger.month(shiftMonth(month, -1))]), ([txs, prev]) => {
+		const s = summarize(txs, month, ctx.today, p.settings.money.categories, p.settings.money.monthlyBudget);
+		const m = p.settings.money;
+		const [day, week, mon] = periodBudgets([...prev, ...txs], ctx.today, p.settings.weekStartsMonday, { daily: m.dailyBudget || 0, weekly: m.weeklyBudget || 0, monthly: s.budget });
+		const grid = sec.createDiv({ cls: "sbd-mh" });
+
+		// left: the numbers
+		const left = grid.createDiv({ cls: "sbd-mh-left" });
+		const big = left.createDiv({ cls: "sbd-mh-big" });
+		big.createSpan({ cls: "sbd-mh-figure", text: money(p, s.spent) });
+		big.createSpan({ cls: "sbd-mh-unit", text: mon.budget ? ` spent of ${money(p, mon.budget)} this month` : " spent this month" });
+		if (mon.budget) budgetTrack(left, mon.spent, mon.budget, mon.elapsed);
+		const meters = left.createDiv({ cls: "sbd-mh-meters" });
+		for (const b of [day, week]) {
+			const row = meters.createDiv({ cls: `sbd-mh-meter is-${b.key}` });
+			const top = row.createDiv({ cls: "sbd-mh-meter-top" });
+			top.createSpan({ cls: "sbd-mh-meter-label", text: b.key === "day" ? "Today" : "This week" });
+			if (b.budget) {
+				const leftAmt = b.budget - b.spent;
+				top.createSpan({ cls: "sbd-mh-meter-val" + (leftAmt < 0 ? " is-neg" : ""), text: leftAmt >= 0 ? `${money(p, leftAmt)} left` : `${money(p, -leftAmt)} over` });
+				budgetTrack(row, b.spent, b.budget, b.key === "day" ? undefined : b.elapsed);
+				row.createDiv({ cls: "sbd-mh-meter-note", text: `${money(p, b.spent)} of ${money(p, b.budget)}` });
+			} else {
+				top.createSpan({ cls: "sbd-mh-meter-val", text: `${money(p, b.spent)} spent` });
+				const set = row.createEl("button", { cls: "sbd-money-period-set", text: b.key === "day" ? "Set a daily budget" : "Set a weekly budget" });
+				set.onclick = () => new MoneySettingsModal(ctx.app, p, () => ctx.rerender()).open();
+			}
+		}
+		const facts = left.createDiv({ cls: "sbd-mh-facts" });
+		const fact = (label: string, value: string, cls = "") => { const f = facts.createDiv(); f.createDiv({ cls: "sbd-muted", text: label }); f.createDiv({ cls: `sbd-mh-fact ${cls}`, text: value }); };
+		fact("Received", money(p, s.income), "is-pos");
+		fact("Net", money(p, s.net, true), s.net < 0 ? "is-neg" : "is-pos");
+		fact("Per day", money(p, Math.round(s.perDay)));
+
+		// right: quick add + the latest spending
+		const right = grid.createDiv({ cls: "sbd-mh-right" });
+		const form = right.createEl("form", { cls: "sbd-mh-add", attr: { "aria-label": "Log spending" } });
+		const input = form.createEl("input", { attr: { type: "text", placeholder: "Log spending — e.g. 250 food lunch, +5000 salary", "aria-label": "Amount, category and note", autocomplete: "off" } });
+		input.dataset.sbdFocus = "money-home-add";
+		const go = form.createEl("button", { cls: "mod-cta", text: "Add", attr: { type: "submit" } });
+		const more = form.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { type: "button", "aria-label": "More options" } });
+		setIcon(more, "sliders-horizontal");
+		more.onclick = () => new TxModal(ctx.app, p, { date: ctx.today }, () => ctx.rerender()).open();
+		const hint = right.createDiv({ cls: "sbd-mh-hint", attr: { role: "status", "aria-live": "polite" } });
+		form.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			const q = parseQuick(input.value, p.settings.money.categories);
+			if (!q) { hint.setText("Start with an amount, e.g. 250 food lunch."); input.focus(); return; }
+			go.disabled = true;
+			const tx = { date: ctx.today, ...q };
+			await p.ledger.add(tx);
+			undoNotice(`${tx.type === "income" ? "Received" : "Spent"} ${money(p, tx.amount)} · ${tx.category}.`, async () => {
+				const rows = await p.ledger.month(month);
+				const hit = [...rows].reverse().find((r) => r.date === tx.date && r.amount === tx.amount && r.category === tx.category && r.note === tx.note);
+				if (hit) { await p.ledger.remove(hit); ctx.rerender(); }
+			});
+			ctx.rerender();
+		});
+
+		const recent = [...txs, ...prev].sort((a, b) => b.date.localeCompare(a.date) || b.line - a.line).slice(0, 6);
+		const list = right.createDiv({ cls: "sbd-mh-log" });
+		if (!recent.length) list.createDiv({ cls: "sbd-empty", text: "Nothing logged yet this month." });
+		for (const t of recent) {
+			const row = list.createDiv({ cls: "sbd-money-tx" });
+			row.oncontextmenu = (e) => txMenu(e, ctx, t);
+			const mainBtn = row.createEl("button", { cls: "sbd-money-tx-main", attr: { type: "button", "aria-label": `${t.note || t.category}, ${money(p, t.amount)}. Edit` } });
+			catIcon(mainBtn, p, t.category);
+			const txt = mainBtn.createDiv({ cls: "sbd-money-tx-text" });
+			txt.createDiv({ cls: "sbd-money-tx-title", text: t.note || t.category });
+			txt.createDiv({ cls: "sbd-money-tx-sub", text: `${t.category} · ${t.date === ctx.today ? "Today" : t.date.slice(5).replace("-", "/")}` });
+			mainBtn.createSpan({ cls: "sbd-money-tx-amt" + (t.type === "income" ? " is-pos" : ""), text: money(p, t.type === "income" ? t.amount : -t.amount, true) });
+			mainBtn.onclick = () => new TxModal(ctx.app, p, { tx: t }, () => ctx.rerender()).open();
+			const del = row.createEl("button", { cls: "sbd-money-tx-del", attr: { type: "button", "aria-label": `Delete ${t.note || t.category}`, title: "Delete (you can undo)" } });
+			setIcon(del, "trash-2");
+			del.onclick = () => void deleteTx(p, t, () => ctx.rerender());
+		}
+		const open = right.createEl("button", { cls: "sbd-ghost-btn sbd-mh-open" });
+		open.createSpan({ text: "See all spending" });
+		setIcon(open.createSpan({ cls: "sbd-icon" }), "arrow-right");
+		open.onclick = () => ctx.openMoney?.();
+	});
+}
+
+/** Money left today (or this month) for the page header's at-a-glance row. */
+export function moneyLeftToday(ctx: DashboardContext): Promise<string | null> {
+	const p = ctx.plugin;
+	const month = ctx.today.slice(0, 7);
+	return Promise.all([p.ledger.month(month), p.ledger.month(shiftMonth(month, -1))]).then(([txs, prev]) => {
+		const m = p.settings.money;
+		const s = summarize(txs, month, ctx.today, m.categories, m.monthlyBudget);
+		const [day, , mon] = periodBudgets([...prev, ...txs], ctx.today, p.settings.weekStartsMonday, { daily: m.dailyBudget || 0, weekly: 0, monthly: s.budget });
+		if (day.budget) return day.budget - day.spent >= 0 ? `${money(p, day.budget - day.spent)} left today` : `${money(p, day.spent - day.budget)} over today`;
+		if (mon.budget) return `${money(p, Math.max(mon.budget - mon.spent, 0))} left this month`;
+		return s.spent ? `${money(p, s.spent)} spent this month` : null;
+	});
 }
 
 // ---------------------------------------------------------------- full view

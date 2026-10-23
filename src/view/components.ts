@@ -15,6 +15,10 @@ export interface DashboardContext {
 	openLibrary: (filter: { folder?: string; tag?: string; area?: string; kind?: string }) => void;
 	openCalendarDay: (date: string) => void;
 	openTrackers: () => void;
+	/** Open the Money page (Trackers → Money). */
+	openMoney?: () => void;
+	/** Jump to the Tasks tab with filters. */
+	openTasks?: (filters: Record<string, unknown>) => void;
 	/** Render Markdown with Obsidian's renderer (links, embeds, callouts). */
 	renderMarkdown: (md: string, el: HTMLElement, sourcePath: string) => void;
 	rerender: () => void;
