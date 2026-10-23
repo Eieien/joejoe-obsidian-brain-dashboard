@@ -1,6 +1,6 @@
 # Pixel playground
 
-A dithered image — hover it to dissolve the dither and see the original:
+A dithered image. Hover it to dissolve the dither and see the original:
 
 ```dither
 src: Attachments/pixel-fish.png
@@ -9,7 +9,7 @@ pixel: 3
 height: 260
 ```
 
-An animated pixel field — move the mouse to light it, click for ripples:
+An animated pixel field. Move the mouse to light it, click for ripples:
 
 ```dither
 palette: amber

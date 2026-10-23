@@ -13,7 +13,7 @@ const TYPES: { id: EntryType; label: string; icon: string }[] = [
 const typeInfo = (t: EntryType) => TYPES.find((x) => x.id === t) ?? TYPES[0];
 
 /**
- * The secrets vault: a lock screen (or first-time setup), then a two-pane manager —
+ * The secrets vault: a lock screen (or first-time setup), then a two-pane manager:
  * searchable list on the left, the selected entry on the right. Values stay masked
  * until revealed; copy clears the clipboard after a delay.
  */
@@ -87,7 +87,7 @@ export class SecretsModal extends Modal {
 		const box = root.createDiv({ cls: "sbd-sec-gate" });
 		setIcon(box.createDiv({ cls: "sbd-sec-gate-icon" }), "shield-plus");
 		box.createEl("h3", { text: "Create your secrets vault" });
-		box.createEl("p", { cls: "sbd-sec-muted", text: "API keys, tokens and passwords, encrypted with AES-256 under one master password. There is no recovery — if you forget it, the vault cannot be opened." });
+		box.createEl("p", { cls: "sbd-sec-muted", text: "API keys, tokens and passwords, encrypted with AES-256 under one master password. There is no recovery. If you forget it, the vault cannot be opened." });
 		const where = box.createDiv({ cls: "sbd-sec-path" });
 		where.createSpan({ text: "Saved to " });
 		where.createEl("code", { text: this.store.file });
@@ -109,7 +109,7 @@ export class SecretsModal extends Modal {
 		});
 		const submit = async () => {
 			err.setText("");
-			if (passwordStrength(pw.value).score < 2) return err.setText("Choose a stronger password — at least 12 characters, or a few random words.");
+			if (passwordStrength(pw.value).score < 2) return err.setText("Choose a stronger password: at least 12 characters, or a few random words.");
 			if (pw.value !== pw2.value) return err.setText("The passwords don't match.");
 			btn.disabled = true;
 			btn.setText("Encrypting…");
@@ -210,7 +210,7 @@ export class SecretsModal extends Modal {
 		const fill = () => {
 			items.empty();
 			const vis = this.visible();
-			if (!vis.length) items.createDiv({ cls: "sbd-sec-empty", text: this.store.entries.length ? "No matches" : "No secrets yet — add one with +" });
+			if (!vis.length) items.createDiv({ cls: "sbd-sec-empty", text: this.store.entries.length ? "No matches" : "No secrets yet. Add one with +" });
 			for (const e of vis) {
 				const row = items.createDiv({ cls: "sbd-sec-item" + (e.id === this.selected ? " is-active" : "") });
 				setIcon(row.createSpan({ cls: "sbd-sec-item-icon" }), typeInfo(e.type).icon);
@@ -249,7 +249,7 @@ export class SecretsModal extends Modal {
 		const f = primaryField(e);
 		if (!f) return void new Notice("Nothing to copy");
 		const secs = await this.store.copy(f.value);
-		new Notice(`Copied ${e.name || "secret"} · ${f.label}${secs ? ` — clears in ${secs}s` : ""}`);
+		new Notice(`Copied ${e.name || "secret"} · ${f.label}${secs ? `, clears in ${secs}s` : ""}`);
 	}
 
 	private renderDetail(detail: HTMLElement, list: HTMLElement): void {
@@ -263,7 +263,7 @@ export class SecretsModal extends Modal {
 		}
 		const mark = () => { this.dirty = true; save.disabled = false; };
 
-		const name = detail.createEl("input", { cls: "sbd-sec-name", attr: { placeholder: "Name — e.g. OpenAI, GitHub PAT", "aria-label": "Name" } });
+		const name = detail.createEl("input", { cls: "sbd-sec-name", attr: { placeholder: "Name, e.g. OpenAI, GitHub PAT", "aria-label": "Name" } });
 		name.value = d.name;
 		name.addEventListener("input", () => { d.name = name.value; mark(); });
 		if (!d.name) window.setTimeout(() => name.focus(), 0);
@@ -314,7 +314,7 @@ export class SecretsModal extends Modal {
 			btn("copy", "Copy", async () => {
 				if (!f.value) return;
 				const secs = await this.store.copy(f.value);
-				new Notice(`Copied ${f.label}${secs ? ` — clears in ${secs}s` : ""}`);
+				new Notice(`Copied ${f.label}${secs ? `, clears in ${secs}s` : ""}`);
 			});
 			btn("more-vertical", "Field options", () => {
 				const m = new Menu();
@@ -329,7 +329,7 @@ export class SecretsModal extends Modal {
 		addField.createSpan({ text: "Add field" });
 		addField.addEventListener("click", () => { d.fields.push({ label: "Field", value: "", secret: true }); mark(); this.renderDetail(detail, list); });
 
-		const notes = detail.createEl("textarea", { cls: "sbd-sec-notes", attr: { placeholder: "Notes (encrypted too) — scopes, where it's used, how to rotate…", rows: "3" } });
+		const notes = detail.createEl("textarea", { cls: "sbd-sec-notes", attr: { placeholder: "Notes (encrypted too): scopes, where it's used, how to rotate…", rows: "3" } });
 		notes.value = d.notes;
 		notes.addEventListener("input", () => { d.notes = notes.value; mark(); });
 

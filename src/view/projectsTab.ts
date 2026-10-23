@@ -140,7 +140,7 @@ class NewProjectModal extends Modal {
 			this.onCreated(path);
 		} catch (e) {
 			console.error(e);
-			new Notice("Second brain: couldn't create the project — see the developer console.");
+			new Notice("Second brain: couldn't create the project. See the developer console.");
 		}
 	}
 

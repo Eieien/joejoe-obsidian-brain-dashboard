@@ -1,7 +1,7 @@
 {
   "name": "joejoes-second-brain",
   "version": "0.1.0",
-  "description": "A full-page dashboard for your vault: tasks on a Kanban board, a calendar, projects, habit tracking with stats, and an A–Z library of your notes — all connected, all stored in plain Markdown.",
+  "description": "A full-page second brain for your vault: tasks on a Kanban board, a calendar, projects and courses, habits and money tracking, an inbox, Zettelkasten tools, a weekly review and an A–Z library. All connected, all plain Markdown.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

@@ -1,5 +1,5 @@
 // Courses: school subjects. They work like projects (tasks, notes, deadlines all
-// connect the same way) and can be marked active or inactive for the semester —
+// connect the same way) and can be marked active or inactive for the semester:
 // tasks of inactive courses drop out of Home / Tasks / Calendar automatically.
 
 import { App, Menu, Modal, normalizePath, Notice, setIcon, TFile } from "obsidian";
@@ -12,6 +12,7 @@ import { dueChip, type DashboardContext } from "./components";
 import { progressBar } from "./homeTab";
 import { MONEY_COLORS } from "./moneyView";
 import { renderProjectHub } from "./projectsTab";
+import { pageGlyph } from "./pageIcons";
 import { styleClasses } from "../settings";
 
 export interface CoursesState { selected?: string; showInactive: boolean }
@@ -26,7 +27,7 @@ const colorOf = (c: ProjectInfo) => (c.color && MONEY_COLORS.includes(c.color) ?
 
 /** Flip a course's `active` property in its note. */
 export async function setCourseActive(ctx: { app: App; plugin: SecondBrainPlugin }, c: ProjectInfo, active: boolean): Promise<void> {
-	if (!c.notePath) { new Notice("This course is a plain folder — add a note named after the folder to set it inactive."); return; }
+	if (!c.notePath) { new Notice("This course is a plain folder. Add a note named after the folder to set it inactive."); return; }
 	const file = ctx.app.vault.getFileByPath(c.notePath);
 	if (!file) return;
 	await ctx.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => { fm.active = active; });
@@ -57,7 +58,8 @@ function renderCourseGrid(el: HTMLElement, ctx: DashboardContext, st: CoursesSta
 
 	if (!courses.length) {
 		const empty = el.createDiv({ cls: "sbd-courses-empty" });
-		setIcon(empty.createDiv({ cls: "sbd-courses-empty-icon" }), "graduation-cap");
+		const eIcon = empty.createDiv({ cls: "sbd-courses-empty-icon sbd-c-indigo" });
+		if (!pageGlyph(eIcon, "courses")) setIcon(eIcon, "graduation-cap");
 		empty.createEl("h3", { text: "Add your subjects" });
 		empty.createEl("p", { cls: "sbd-muted", text: `Create a course with the button above, or turn existing notes into courses: put them in "${s.courseFolder}/", tag them #${s.courseTag}, or add "type: course" to their properties.` });
 		return;
@@ -90,7 +92,7 @@ function courseCard(grid: HTMLElement, ctx: DashboardContext, c: ProjectInfo, up
 
 	const top = card.createDiv({ cls: "sbd-course-top" });
 	if (c.code) top.createSpan({ cls: "sbd-course-code", text: c.code });
-	const sw = top.createEl("button", { cls: "sbd-course-switch" + (c.active !== false ? " is-on" : ""), attr: { role: "switch", "aria-checked": String(c.active !== false), "aria-label": c.active !== false ? `${c.name} is active this semester — click to mark inactive` : `${c.name} is inactive — click to mark active`, title: c.active !== false ? "Active this semester" : "Not this semester" } });
+	const sw = top.createEl("button", { cls: "sbd-course-switch" + (c.active !== false ? " is-on" : ""), attr: { role: "switch", "aria-checked": String(c.active !== false), "aria-label": c.active !== false ? `${c.name} is active this semester. Click to mark inactive` : `${c.name} is inactive. Click to mark active`, title: c.active !== false ? "Active this semester" : "Not this semester" } });
 	sw.createSpan({ cls: "sbd-course-switch-knob" });
 	sw.onclick = async (e) => {
 		e.stopPropagation();
@@ -252,7 +254,7 @@ export class CourseModal extends Modal {
 
 // ---------------------------------------------------------------- plan a semester
 
-/** Name the term and tick which courses you're taking — everything else goes inactive. */
+/** Name the term and tick which courses you're taking; everything else goes inactive. */
 class SemesterModal extends Modal {
 	constructor(app: App, private plugin: SecondBrainPlugin, private done: () => void) {
 		super(app);
@@ -268,7 +270,7 @@ class SemesterModal extends Modal {
 		termRow.createSpan({ cls: "sbd-money-flabel", text: "Semester name" });
 		const term = termRow.createEl("input", { attr: { type: "text", placeholder: "e.g. 2nd Sem 2026–27" } });
 		term.value = p.settings.currentTerm;
-		el.createDiv({ cls: "sbd-money-help", text: "Tick the courses you're taking this semester. Unticked courses become inactive — their notes and tasks stay, they just stop showing up day to day." });
+		el.createDiv({ cls: "sbd-money-help", text: "Tick the courses you're taking this semester. Unticked courses become inactive. Their notes and tasks stay, they just stop showing up day to day." });
 
 		const courses = p.index.courseList().filter((c) => c.notePath);
 		const picked = new Set(courses.filter((c) => c.active !== false).map((c) => c.key));

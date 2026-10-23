@@ -208,7 +208,7 @@ export function renderHabitStats(el: HTMLElement, ctx: DashboardContext, entries
 		c.onclick = () => update({ hidden: on ? [...st.hidden, h.key] : st.hidden.filter((k) => k !== h.key) });
 	}
 	if (st.hidden.length) chips.createDiv({ cls: "sbd-habit-chip is-ghost", text: "show all" }).onclick = () => update({ hidden: [] });
-	if (!visible.length) { emptyState(el, "All habits hidden — pick one above."); return; }
+	if (!visible.length) { emptyState(el, "All habits hidden. Pick one above."); return; }
 
 	// One combined table: every habit's numbers and its heatmap strip side by side.
 	const span = diffDays(end, start) + 1;
@@ -250,7 +250,7 @@ export function renderHabitStats(el: HTMLElement, ctx: DashboardContext, entries
 			const level = weekly ? (n === 0 ? 0 : Math.min(4, Math.ceil((n / 7) * 4))) : n ? 4 : 0;
 			strip.createDiv({
 				cls: `sbd-strip-cell sbd-heat-${level} ${bk.start === ctx.today ? "is-today" : ""}`,
-				attr: { title: weekly ? `week of ${moment(bk.start).format("MMM D")} · ${n}/${total} days` : `${moment(bk.start).format("ddd MMM D")} · ${n ? "done" : "—"}` },
+				attr: { title: weekly ? `week of ${moment(bk.start).format("MMM D")} · ${n}/${total} days` : `${moment(bk.start).format("ddd MMM D")} · ${n ? "done" : "-"}` },
 			});
 		}
 		const goal = row.createDiv({ cls: "sbd-mx-goal" });
@@ -274,7 +274,7 @@ export function renderHabitStats(el: HTMLElement, ctx: DashboardContext, entries
 	const chartStart = span > 120 ? addDays(end, -119) : start;
 	for (let d = chartStart; d <= end; d = addDays(d, 1)) {
 		const names = visible.filter((h) => done.get(d)?.has(h.key)).map((h) => h.label);
-		series.push({ label: moment(d).format("MMM D"), value: names.length, tip: `${moment(d).format("ddd MMM D")} · ${names.length}/${visible.length}${names.length ? ` — ${names.join(", ")}` : ""}` });
+		series.push({ label: moment(d).format("MMM D"), value: names.length, tip: `${moment(d).format("ddd MMM D")} · ${names.length}/${visible.length}${names.length ? `: ${names.join(", ")}` : ""}` });
 	}
 	barChart(chart, series, { height: 110, goal: visible.length });
 }
@@ -320,7 +320,7 @@ function renderHabitFocus(el: HTMLElement, ctx: DashboardContext, entries: Track
 	const year = el.createDiv({ cls: "sbd-card" });
 	year.createDiv({ cls: "sbd-card-head" }).createSpan({ cls: "sbd-card-title", text: "last 12 months" });
 	const vals = new Map([...done.entries()].filter(([, set]) => set.has(h.key)).map(([d]) => [d, 1]));
-	heatmap(year, vals, addDays(ctx.today, -364), ctx.today, { weekStartsMonday: s.weekStartsMonday, tip: (d, v) => `${moment(d).format("ddd MMM D")} · ${v ? "done" : "—"}` });
+	heatmap(year, vals, addDays(ctx.today, -364), ctx.today, { weekStartsMonday: s.weekStartsMonday, tip: (d, v) => `${moment(d).format("ddd MMM D")} · ${v ? "done" : "-"}` });
 	goalLine(year, entries, h, ctx);
 
 	const weeks = el.createDiv({ cls: "sbd-card" });

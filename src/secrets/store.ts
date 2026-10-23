@@ -62,7 +62,7 @@ export function ensureGitignored(file: string): boolean {
 	const cur = fs.existsSync(gi) ? fs.readFileSync(gi, "utf8") : "";
 	const lines = cur.split(/\r?\n/).map((l) => l.trim());
 	if (lines.includes(rel) || lines.includes(rel.slice(1)) || lines.includes("*.enc")) return false;
-	fs.writeFileSync(gi, `${cur}${cur && !cur.endsWith("\n") ? "\n" : ""}# joejoe's second brain — encrypted secrets\n${rel}\n`);
+	fs.writeFileSync(gi, `${cur}${cur && !cur.endsWith("\n") ? "\n" : ""}# joejoe's second brain: encrypted secrets\n${rel}\n`);
 	return true;
 }
 

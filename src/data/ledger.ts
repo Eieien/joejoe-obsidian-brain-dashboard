@@ -84,7 +84,7 @@ export function addTx(content: string, t: Omit<Tx, "line">): string {
 	return lines.join(nl);
 }
 
-/** Replace (or, with null, delete) the row at `line` — only if it still matches `expect`. */
+/** Replace (or, with null, delete) the row at `line`, only if it still matches `expect`. */
 export function editTx(content: string, expect: Tx, next: Omit<Tx, "line"> | null): string {
 	const nl = content.includes("\r\n") ? "\r\n" : "\n";
 	const lines = content.split(/\r?\n/);
@@ -152,7 +152,7 @@ export interface MonthSummary {
 	/** Expense categories, largest first (budgeted-but-unused categories included). */
 	categories: CategoryTotal[];
 	incomeCategories: CategoryTotal[];
-	/** Days elapsed (1…n) — the whole month for past months. */
+	/** Days elapsed (1…n); the whole month for past months. */
 	elapsed: number;
 }
 
@@ -277,7 +277,7 @@ export const DEFAULT_MONEY_CATEGORIES: MoneyCategory[] = [
 	{ name: "Other income", icon: "plus-circle", color: "gray", kind: "income", budget: 0 },
 ];
 
-/** ₱1,234 / ₱1,234.50 — whole pesos without decimals. */
+/** ₱1,234 / ₱1,234.50: whole pesos without decimals. */
 export function peso(n: number, opts: { sign?: boolean; currency?: string } = {}): string {
 	const cur = opts.currency || "PHP";
 	const whole = Math.abs(n % 1) < 0.005;

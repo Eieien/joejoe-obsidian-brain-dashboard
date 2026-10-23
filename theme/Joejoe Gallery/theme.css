@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Joejoe Gallery — an Obsidian theme
+   Joejoe Gallery: an Obsidian theme
    Warm espresso (dark) and parchment (light), serif display type over a
    quiet sans body, soft rounded panels. Pairs with joejoe's second brain.
    ========================================================================== */
@@ -50,7 +50,7 @@ body {
 
 /* ---------- Dark: espresso ---------- */
 .theme-dark {
-	--gallery-0: #1b1915;   /* deepest — sidebars, title bar */
+	--gallery-0: #1b1915;   /* deepest: sidebars, title bar */
 	--gallery-1: #211e1a;   /* secondary */
 	--gallery-2: #26231e;   /* editor */
 	--gallery-3: #2e2a24;   /* cards, fields */
@@ -301,7 +301,7 @@ input:focus, textarea:focus, select:focus { box-shadow: 0 0 0 2px color-mix(in s
 
 
 /* ==========================================================================
-   Code blocks — VS Code style (Dark+ / Light+ palette)
+   Code blocks: VS Code style (Dark+ / Light+ palette)
    ========================================================================== */
 .theme-dark {
 	--code-background: #161616;
@@ -367,7 +367,7 @@ body { --font-code-gallery: "Cascadia Mono", "Cascadia Code", Consolas, "JetBrai
 /* line numbers (editor gutter and code-block plugins) */
 .markdown-source-view.mod-cm6 .cm-lineNumbers .cm-gutterElement, [class*="line-number"], [class*="LineNumber"] { color: var(--code-gutter) !important; font-family: var(--font-code-gallery); }
 
-/* Tokens — reading view (Prism) */
+/* Tokens: reading view (Prism) */
 .markdown-rendered pre :is(.token.comment, .token.prolog, .token.doctype, .token.cdata) { color: var(--code-comment); font-style: italic; }
 .markdown-rendered pre :is(.token.keyword, .token.control, .token.control-flow, .token.module) { color: var(--code-keyword); }
 .markdown-rendered pre :is(.token.boolean, .token.null, .token.nil, .token.keyword.null) { color: var(--code-storage); }
@@ -384,7 +384,7 @@ body { --font-code-gallery: "Cascadia Mono", "Cascadia Code", Consolas, "JetBrai
 .markdown-rendered pre .token.punctuation { color: var(--code-punctuation); }
 .markdown-rendered pre :is(.token.interpolation-punctuation, .token.template-punctuation) { color: var(--code-storage); }
 
-/* Tokens — editing view (CodeMirror) */
+/* Tokens: editing view (CodeMirror) */
 .markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-comment, .cm-meta) { color: var(--code-comment); font-style: italic; }
 .markdown-source-view.mod-cm6 .HyperMD-codeblock .cm-keyword { color: var(--code-keyword); }
 .markdown-source-view.mod-cm6 .HyperMD-codeblock :is(.cm-atom, .cm-bool) { color: var(--code-storage); }
@@ -402,7 +402,7 @@ body { --font-code-gallery: "Cascadia Mono", "Cascadia Code", Consolas, "JetBrai
 
 
 /* ==========================================================================
-   Glass — frosted popovers always; see-through surfaces with
+   Glass: frosted popovers always; see-through surfaces with
    Settings → Appearance → Translucent window (Windows / macOS)
    ========================================================================== */
 body { --glass-blur: blur(22px) saturate(150%); }

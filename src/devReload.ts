@@ -29,7 +29,7 @@ export function watchForUpdates(plugin: Plugin & { settings: { autoReload: boole
 		// The plugins manager isn't part of the public API; guard it.
 		const plugins = (plugin.app as unknown as { plugins?: PluginsApi }).plugins;
 		if (!plugins) return;
-		new Notice(`${plugin.manifest.name} updated — reloading`, 2500);
+		new Notice(`${plugin.manifest.name} updated, reloading`, 2500);
 		const id = plugin.manifest.id;
 		await plugins.disablePlugin(id);
 		await plugins.enablePlugin(id);

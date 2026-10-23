@@ -198,7 +198,7 @@ function renderNotebookSplit(page: HTMLElement, ctx: DashboardContext, st: HomeS
 	const projects = index.projectList().filter((p) => st.projects === "all" || !isClosedStatus(p.status))
 		.map((p) => ({ p, s: projectStats(index.tasksForProject(p.key), ctx.today, settings) }))
 		.sort((x, y) => y.s.urgent - x.s.urgent || y.s.overdue - x.s.overdue || (x.s.nextDue ?? "9999").localeCompare(y.s.nextDue ?? "9999"));
-	if (!projects.length) emptyState(pr, `No projects yet — notes in "${settings.projectFolder}/" or tagged #${settings.projectTag} show here.`);
+	if (!projects.length) emptyState(pr, `No projects yet. Notes in "${settings.projectFolder}/" or tagged #${settings.projectTag} show here.`);
 	for (const { p, s } of projects.slice(0, 8)) {
 		const c = pr.createDiv({ cls: "sbd-proj-card" });
 		const name = c.createDiv({ cls: "sbd-proj-card-name" });

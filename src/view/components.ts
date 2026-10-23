@@ -118,7 +118,7 @@ export function withoutName(text: string, p: { name: string; notePath?: string }
 	let out = text;
 	for (const n of names) {
 		const esc = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-		out = out.replace(new RegExp(`\\s*[|·–—-]?\\s*${esc}\\s*$`, "i"), "").replace(new RegExp(`\\s+${esc}(?=\\s)`, "i"), "");
+		out = out.replace(new RegExp(`\\s*[|·–\u2014-]?\\s*${esc}\\s*$`, "i"), "").replace(new RegExp(`\\s+${esc}(?=\\s)`, "i"), "");
 	}
 	return out.trim();
 }
@@ -154,7 +154,7 @@ export function renderTask(parent: HTMLElement, task: Task, ctx: DashboardContex
 	if (task.priority !== 3) priorityBadge(meta, task.priority);
 	if (opts.showStatus && task.status !== "todo") meta.createSpan({ cls: "sbd-status-chip", text: STATUS_LABELS[task.status] });
 	if (task.due) dueChip(meta, task.due, ctx.today);
-	if (isAutoUrgent(task, ctx.today, ctx.plugin.settings)) meta.createSpan({ cls: "sbd-auto-urgent", text: "auto-urgent", attr: { "aria-label": "Due soon — escalated automatically" } });
+	if (isAutoUrgent(task, ctx.today, ctx.plugin.settings)) meta.createSpan({ cls: "sbd-auto-urgent", text: "auto-urgent", attr: { "aria-label": "Due soon, escalated automatically" } });
 	for (const l of task.labels) labelChip(meta, ctx, l);
 	if (opts.showProject !== false && task.project) {
 		const p = ctx.plugin.index.projects.get(task.project);

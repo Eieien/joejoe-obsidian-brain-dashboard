@@ -82,7 +82,7 @@ export function renderReviewTab(el: HTMLElement, ctx: DashboardContext, st: Revi
 	}
 
 	// ---- Slipped ----
-	const slipBody = card(main, "Slipped — reschedule or drop", { icon: "alert-triangle", count: slipped.length });
+	const slipBody = card(main, "Slipped: reschedule or drop", { icon: "alert-triangle", count: slipped.length });
 	if (!slipped.length) emptyState(slipBody, "Nothing slipped. 🎯");
 	else {
 		const bulk = slipBody.createEl("button", { cls: "sbd-ghost-btn" });

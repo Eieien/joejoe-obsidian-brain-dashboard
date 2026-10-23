@@ -20,7 +20,7 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
 };
 
 export interface Task {
-	/** `${path}:${line}` — stable until lines above it change. */
+	/** `${path}:${line}`, stable until lines above it change. */
 	id: string;
 	path: string;
 	line: number;
@@ -87,7 +87,7 @@ export interface NoteInfo {
 	type?: string;
 	/** Frontmatter `area:` (link brackets stripped), if any. */
 	area?: string;
-	/** The daily note's day, or frontmatter `date:` (YYYY-MM-DD) on other notes — shown on the calendar. */
+	/** The daily note's day, or frontmatter `date:` (YYYY-MM-DD) on other notes, shown on the calendar. */
 	date?: string;
 	/** Time of day (HH:mm) from `time:`/`start:` or a datetime `date:`. */
 	time?: string;

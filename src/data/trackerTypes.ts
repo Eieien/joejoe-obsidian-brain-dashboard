@@ -30,9 +30,9 @@ export interface TrackerDef {
 	name: string;
 	icon: string;
 	/**
-	 * daily — values come from daily notes (frontmatter or `key:: value`).
-	 * notes — one note per item, in a folder and/or with a tag.
-	 * table — rows of a Markdown table in one note.
+	 * daily: values come from daily notes (frontmatter or `key:: value`).
+	 * notes: one note per item, in a folder and/or with a tag.
+	 * table: rows of a Markdown table in one note.
 	 */
 	source: TrackerSource;
 	folder?: string;

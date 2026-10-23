@@ -10,6 +10,7 @@ import {
 } from "../data/ledger";
 import { styleClasses } from "../settings";
 import { section, whenLoaded, type DashboardContext } from "./components";
+import { pageGlyph } from "./pageIcons";
 
 export interface MoneyState { month?: string; filter: "all" | TxType; category?: string; query: string }
 
@@ -119,7 +120,8 @@ export function moneyCard(grid: HTMLElement, ctx: DashboardContext, open: () => 
 	card.onclick = open;
 	card.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
 	const head = card.createDiv({ cls: "sbd-home-card-head" });
-	setIcon(head.createSpan({ cls: "sbd-home-card-icon sbd-c-emerald" }), "wallet");
+	const mIcon = head.createSpan({ cls: "sbd-home-card-icon sbd-c-emerald" });
+	if (!pageGlyph(mIcon, "money")) setIcon(mIcon, "wallet");
 	head.createSpan({ cls: "sbd-home-card-name", text: "Money" });
 	const add = head.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { "aria-label": "Log expense or income" } });
 	setIcon(add, "plus");
@@ -194,7 +196,7 @@ export function moneyHomeSection(page: HTMLElement, ctx: DashboardContext): void
 		// right: quick add + the latest spending
 		const right = grid.createDiv({ cls: "sbd-mh-right" });
 		const form = right.createEl("form", { cls: "sbd-mh-add", attr: { "aria-label": "Log spending" } });
-		const input = form.createEl("input", { attr: { type: "text", placeholder: "Log spending — e.g. 250 food lunch, +5000 salary", "aria-label": "Amount, category and note", autocomplete: "off" } });
+		const input = form.createEl("input", { attr: { type: "text", placeholder: "Log spending, e.g. 250 food lunch, +5000 salary", "aria-label": "Amount, category and note", autocomplete: "off" } });
 		input.dataset.sbdFocus = "money-home-add";
 		const go = form.createEl("button", { cls: "mod-cta", text: "Add", attr: { type: "submit" } });
 		const more = form.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { type: "button", "aria-label": "More options" } });
@@ -327,9 +329,9 @@ function hero(parent: HTMLElement, ctx: DashboardContext, s: MonthSummary, month
 		f.createDiv({ cls: "sbd-money-fact-note", text: note });
 	};
 	fact("Received", money(p, s.income), s.incomeCategories[0] ? `Mostly ${s.incomeCategories[0].name.toLowerCase()}` : "Nothing yet", "is-pos");
-	fact("Spent", money(p, s.spent), s.elapsed ? `${money(p, Math.round(s.perDay))} a day` : "—");
+	fact("Spent", money(p, s.spent), s.elapsed ? `${money(p, Math.round(s.perDay))} a day` : "-");
 	fact("Net", money(p, s.net, true), s.net >= 0 ? "Income minus spending" : "Spending more than income", s.net < 0 ? "is-neg" : "is-pos");
-	fact("Saved", s.income ? `${Math.max(0, Math.round((s.net / s.income) * 100))}%` : "—", "Of this month's income");
+	fact("Saved", s.income ? `${Math.max(0, Math.round((s.net / s.income) * 100))}%` : "-", "Of this month's income");
 }
 
 /** Today / this week / this month against their budgets. */
@@ -619,9 +621,9 @@ function weekdays(card: HTMLElement, ctx: DashboardContext, txs: Tx[], s: MonthS
 		row.createSpan({ cls: "sbd-money-wd-name", text: WEEKDAY[d] });
 		const track = row.createDiv({ cls: "sbd-money-wd-track" });
 		track.createDiv({ cls: "sbd-money-wd-fill", attr: { style: `width: ${(avgs[d] / max) * 100}%` } });
-		row.createSpan({ cls: "sbd-money-wd-val", text: avgs[d] ? money(p, Math.round(avgs[d])) : "—" });
+		row.createSpan({ cls: "sbd-money-wd-val", text: avgs[d] ? money(p, Math.round(avgs[d])) : "-" });
 	}
-	if (avgs[top] > 0) card.createDiv({ cls: "sbd-money-chart-foot", text: `${WEEKDAY[top]}s cost the most — about ${money(p, Math.round(avgs[top]))} on average.` });
+	if (avgs[top] > 0) card.createDiv({ cls: "sbd-money-chart-foot", text: `${WEEKDAY[top]}s cost the most, about ${money(p, Math.round(avgs[top]))} on average.` });
 }
 
 // ---- categories + biggest expenses ----
@@ -710,7 +712,7 @@ function ledgerBlock(parent: HTMLElement, ctx: DashboardContext, txs: Tx[], st: 
 		&& (!q || `${t.note} ${t.category} ${t.amount}`.toLowerCase().includes(q)))
 		.sort((a, b) => b.date.localeCompare(a.date) || b.line - a.line);
 	if (!rows.length) {
-		parent.createDiv({ cls: "sbd-empty", text: txs.length ? "Nothing matches these filters." : "No transactions this month. Add one above — for example 250 food lunch." });
+		parent.createDiv({ cls: "sbd-empty", text: txs.length ? "Nothing matches these filters." : "No transactions this month. Add one above, for example 250 food lunch." });
 		return;
 	}
 	const list = parent.createDiv({ cls: "sbd-money-ledger" });
@@ -921,7 +923,7 @@ export class MoneySettingsModal extends Modal {
 		const el = this.contentEl;
 		el.empty();
 
-		// Budgets — the numbers that matter most — sit on top: daily, weekly, monthly.
+		// Budgets (the numbers that matter most) sit on top: daily, weekly, monthly.
 		const budget = el.createDiv({ cls: "sbd-money-budgetbox" });
 		budget.createDiv({ cls: "sbd-money-flabel sbd-money-budgettitle", text: "Spending budgets" });
 		const fields = budget.createDiv({ cls: "sbd-money-budgetgrid" });

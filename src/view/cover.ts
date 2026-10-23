@@ -15,7 +15,7 @@ function rng(seed: number): () => number {
 	};
 }
 
-/** Smooth 1-D noise from a few sines — enough for ridge lines. */
+/** Smooth 1-D noise from a few sines, enough for ridge lines. */
 function ridge(x: number, seed: number, amp: number[]): number {
 	let y = 0;
 	amp.forEach((a, i) => { y += a * Math.sin(x * (0.004 * (i + 1) ** 1.7) + seed * (i + 3.1)); });
@@ -143,6 +143,6 @@ export function landscapeCover(): string {
 	g.putImageData(img, 0, 0);
 
 	cached = c.toDataURL("image/jpeg", 0.85);
-	try { window.localStorage.setItem(CACHE_KEY, cached); } catch { /* quota — fine, redraw next time */ }
+	try { window.localStorage.setItem(CACHE_KEY, cached); } catch { /* quota exceeded: fine, redraw next time */ }
 	return cached;
 }

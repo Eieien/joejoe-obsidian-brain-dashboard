@@ -130,7 +130,7 @@ function galleryCover(top: HTMLElement, ctx: DashboardContext): void {
 	coverToolbar(band, ctx, { surface: strip, layer, mode: "background" });
 }
 
-/** At a glance: greeting, date, tasks due, money left, next deadline — each optional. */
+/** At a glance: greeting, date, tasks due, money left, next deadline, each optional. */
 function glanceRow(head: HTMLElement, ctx: DashboardContext): void {
 	const g = ctx.plugin.settings.appearance.glance;
 	if (!g || !Object.values(g).some(Boolean)) return;
@@ -177,7 +177,7 @@ function editorialHome(top: HTMLElement, ctx: DashboardContext): void {
 	const dayIndex = Math.floor(Date.parse(ctx.today) / 86_400_000);
 	const quote = a.showQuote && a.quotes.length ? a.quotes[dayIndex % a.quotes.length] : "make today count";
 	const wrap = top.createDiv({ cls: "sbd-page-head sbd-home-editorial" });
-	const head = renderPageHead(wrap, ctx, { tab: "home", title: a.title || "second brain", sub: `${greeting} — ${now.format("dddd, MMMM D")}`, tagline: quote, color: "amber", icon: "home" }, {
+	const head = renderPageHead(wrap, ctx, { tab: "home", title: a.title || "second brain", sub: `${greeting}, ${now.format("dddd, MMMM D")}`, tagline: quote, color: "amber", icon: "home" }, {
 		image: a.banner || undefined,
 		imagePosition: a.bannerPosition ?? 50,
 		controls: (band, ph) => {
@@ -352,7 +352,7 @@ export function flipClock(parent: HTMLElement, ctx: DashboardContext): void {
 
 export function pixelFieldTile(parent: HTMLElement, ctx: DashboardContext): void {
 	const px = ctx.plugin.settings.appearance.pixel;
-	const tile = parent.createDiv({ cls: "sbd-widget sbd-pixel-field", attr: { "aria-label": "Pixel field — move to light it, click for ripples" } });
+	const tile = parent.createDiv({ cls: "sbd-widget sbd-pixel-field", attr: { "aria-label": "Pixel field: move to light it, click for ripples" } });
 	ctx.addCleanup(pixelField(tile, { palette: px.palette, pixel: px.size }));
 	tile.createDiv({ cls: "sbd-pixel-field-label", text: "move · click" });
 }

@@ -199,7 +199,7 @@ export interface DashboardSettings {
 	savedViews: SavedView[];
 	/** Reload the plugin automatically when its files change (after a deploy). */
 	autoReload: boolean;
-	/** Secrets vault: file location and timeouts only — never secret values. */
+	/** Secrets vault: file location and timeouts only, never secret values. */
 	secrets: SecretsSettings;
 	/** Money tracker: ledger folder, currency, budgets and categories. */
 	money: MoneySettings;
@@ -507,7 +507,7 @@ export class DashboardSettingTab extends PluginSettingTab {
 		const g = a.glass;
 		const glassSave = async () => { await this.plugin.persist(); };
 		new Setting(containerEl).setName("Glass mode")
-			.setDesc("Puts a wallpaper behind all of Obsidian and frosts every pane on top of it — a see-through look that works on any system.")
+			.setDesc("Puts a wallpaper behind all of Obsidian and frosts every pane on top of it for a see-through look that works on any system.")
 			.addToggle((t) => t.setValue(g.enabled).onChange(async (v) => { g.enabled = v; await glassSave(); this.display(); }));
 		if (g.enabled) {
 			new Setting(containerEl).setName("Wallpaper").setDesc(g.wallpaper ? g.wallpaper : "Using your dashboard cover image.")

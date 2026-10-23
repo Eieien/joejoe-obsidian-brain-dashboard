@@ -72,7 +72,7 @@ export function renderTasksTab(el: HTMLElement, ctx: DashboardContext, f: TaskFi
 	const hideInactive = ctx.plugin.settings.hideInactiveCourseTasks;
 	select(toolbar, "Project or course", f.project, [
 		["", "All projects & courses"], ["__none", "No project or course"], ["__courses", "All active courses"],
-		...courses.filter((c) => !hideInactive || c.active !== false || f.project === c.key).map((c) => [c.key, `Course · ${c.code ? `${c.code} — ` : ""}${c.name}${c.active === false ? " (inactive)" : ""}`] as [string, string]),
+		...courses.filter((c) => !hideInactive || c.active !== false || f.project === c.key).map((c) => [c.key, `Course · ${c.code ? `${c.code} · ` : ""}${c.name}${c.active === false ? " (inactive)" : ""}`] as [string, string]),
 		...projects.map((p) => [p.key, `Project · ${p.name}`] as [string, string]),
 	], (v) => update({ project: v }));
 	if (courses.some((c) => c.active === false)) {
@@ -169,7 +169,7 @@ function renderMatrix(el: HTMLElement, tasks: Task[], ctx: DashboardContext, f: 
 		const body = box.createDiv({ cls: "sbd-quadrant-body" });
 		if (!list.length) emptyState(body, "Nothing here.");
 		for (const t of list.slice(0, 30)) renderTask(body, t, ctx);
-		if (list.length > 30) body.createDiv({ cls: "sbd-muted", text: `+ ${list.length - 30} more — narrow with the filters` });
+		if (list.length > 30) body.createDiv({ cls: "sbd-muted", text: `+ ${list.length - 30} more; narrow with the filters` });
 	}
 }
 

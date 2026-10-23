@@ -152,7 +152,7 @@ export class CaptureModal extends Modal {
 		sel.createEl("option", { value: "", text: projects.length || courses.length ? "None" : "No projects found" });
 		if (courses.length) {
 			const g = sel.createEl("optgroup", { attr: { label: "Courses this semester" } });
-			for (const c of courses) g.createEl("option", { value: c.key, text: `${c.code ? `${c.code} — ` : ""}${c.name}` });
+			for (const c of courses) g.createEl("option", { value: c.key, text: `${c.code ? `${c.code} · ` : ""}${c.name}` });
 		}
 		const pg = courses.length ? sel.createEl("optgroup", { attr: { label: "Projects" } }) : sel;
 		for (const p of projects) pg.createEl("option", { value: p.key, text: p.name });
@@ -197,7 +197,7 @@ export class CaptureModal extends Modal {
 			this.close();
 		} catch (e) {
 			console.error(e);
-			new Notice("Second brain: couldn't save — see the developer console for details.");
+			new Notice("Second brain: couldn't save. See the developer console for details.");
 		}
 	}
 

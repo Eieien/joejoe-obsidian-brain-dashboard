@@ -169,7 +169,7 @@ export class EntryModal extends Modal {
 				}
 				case "status":
 					s.addDropdown((dd) => {
-						dd.addOption("", "—");
+						dd.addOption("", "-");
 						(f.options ?? []).forEach((o) => dd.addOption(o, o));
 						dd.onChange((v) => { this.values[f.key] = v; });
 					});
@@ -199,7 +199,7 @@ export class EntryModal extends Modal {
 			this.close();
 		} catch (e) {
 			console.error(e);
-			new Notice("Second brain: could not save the entry — see console.");
+			new Notice("Second brain: could not save the entry. See console.");
 		}
 	}
 

@@ -1,4 +1,4 @@
-// A small browser stand-in for the Obsidian API — just enough to render the dashboard
+// A small browser stand-in for the Obsidian API: just enough to render the dashboard
 // against an in-memory copy of demo-vault for visual checks. Not shipped with the plugin.
 import yaml from "js-yaml";
 import * as lucide from "lucide";

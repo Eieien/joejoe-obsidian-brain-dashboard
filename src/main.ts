@@ -199,7 +199,7 @@ export default class SecondBrainPlugin extends Plugin {
 		});
 	}
 
-	/** Save without re-indexing — for UI-only state like card order. */
+	/** Save without re-indexing, for UI-only state like card order. */
 	async persist(): Promise<void> {
 		await this.saveData(this.settings);
 		applyGlass(this);

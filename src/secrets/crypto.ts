@@ -1,6 +1,6 @@
 // Encryption for the secrets vault. Web Crypto only (works in Obsidian and in Node tests):
 //   key  = PBKDF2-SHA256(master password, random 16-byte salt, 600k iterations) → AES-256-GCM
-//   file = JSON envelope { v, kdf, iv, ct } — only ciphertext is ever written.
+//   file = JSON envelope { v, kdf, iv, ct }; only ciphertext is ever written.
 // Pure module: no Obsidian imports, never logs secret material.
 
 export const KDF_ITERATIONS = 600_000;
@@ -116,8 +116,8 @@ export function passwordStrength(pw: string): { score: 0 | 1 | 2 | 3 | 4; hint: 
 	const unique = new Set(pw).size;
 	const bits = Math.log2(Math.max(pool, 2)) * Math.min(pw.length, unique * 2);
 	const score = (bits < 40 ? 0 : bits < 60 ? 1 : bits < 80 ? 2 : bits < 100 ? 3 : 4) as 0 | 1 | 2 | 3 | 4;
-	const hints = ["Too easy to guess", "Weak — make it longer", "Okay — longer is better", "Strong", "Very strong"];
-	return { score, hint: pw.length < 12 && score < 3 ? "Use at least 12 characters — a few random words works well" : hints[score] };
+	const hints = ["Too easy to guess", "Weak, make it longer", "Okay, longer is better", "Strong", "Very strong"];
+	return { score, hint: pw.length < 12 && score < 3 ? "Use at least 12 characters. A few random words work well" : hints[score] };
 }
 
 export function newEntry(type: EntryType = "api-key"): SecretEntry {
@@ -138,7 +138,7 @@ export function primaryField(e: SecretEntry): SecretField | undefined {
 export function matches(e: SecretEntry, query: string): boolean {
 	const q = query.trim().toLowerCase();
 	if (!q) return true;
-	// Search names, tags, URLs and non-secret field values only — never secret values.
+	// Search names, tags, URLs and non-secret field values only, never secret values.
 	return [e.name, e.url, e.type, ...e.tags, ...e.fields.filter((f) => !f.secret).map((f) => `${f.label} ${f.value}`)]
 		.some((s) => s.toLowerCase().includes(q));
 }

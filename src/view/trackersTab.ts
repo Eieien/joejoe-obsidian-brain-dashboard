@@ -9,6 +9,7 @@ import { emptyState, pill, section, whenLoaded, type DashboardContext } from "./
 import { HabitsModal, renderHabitStats, renderHabitSummary, renderHabitWeek } from "./habits";
 import { EntryModal, TrackerEditModal } from "./trackerModals";
 import { moneyCard, renderMoney, type MoneyState } from "./moneyView";
+import { pageGlyph } from "./pageIcons";
 
 export interface TrackersState {
 	/** A custom (non-habit) tracker opened in detail. */
@@ -84,7 +85,7 @@ export function renderTrackersTab(el: HTMLElement, ctx: DashboardContext, st: Tr
 		rangeToggle(bar, st, update);
 		renderOverview(other, ctx, defs, st.range, (id) => update({ selected: id }));
 	} else {
-		home.createDiv({ cls: "sbd-empty sbd-home-hint", text: "Track anything else with numbers or stages — workouts, weight, job applications — from daily notes, one note per item, or a table. Use + to add one." });
+		home.createDiv({ cls: "sbd-empty sbd-home-hint", text: "Track anything else with numbers or stages (workouts, weight, job applications) from daily notes, one note per item, or a table. Use + to add one." });
 	}
 }
 
@@ -95,13 +96,14 @@ function habitsCard(grid: HTMLElement, ctx: DashboardContext, open: () => void):
 	card.onclick = open;
 	card.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
 	const head = card.createDiv({ cls: "sbd-home-card-head" });
-	setIcon(head.createSpan({ cls: "sbd-home-card-icon sbd-c-violet" }), "check-square");
+	const hIcon = head.createSpan({ cls: "sbd-home-card-icon sbd-c-violet" });
+	if (!pageGlyph(hIcon, "habits")) setIcon(hIcon, "check-square");
 	head.createSpan({ cls: "sbd-home-card-name", text: "Habits" });
 	const manage = head.createEl("button", { cls: "sbd-icon-btn clickable-icon", attr: { "aria-label": "Manage habits" } });
 	setIcon(manage, "settings-2");
 	manage.onclick = (e) => { e.stopPropagation(); new HabitsModal(ctx.app, ctx.plugin, () => ctx.rerender()).open(); };
 	const body = card.createDiv({ cls: "sbd-home-card-body" });
-	if (!habitsDefs.length) { body.createDiv({ cls: "sbd-empty", text: "No habits yet — use the gear to add some." }); return; }
+	if (!habitsDefs.length) { body.createDiv({ cls: "sbd-empty", text: "No habits yet. Use the gear to add some." }); return; }
 	whenLoaded(body, ctx.plugin.trackers.habitEntries(), (entries) => {
 		const byDate = new Map(entries.filter((e) => e.date).map((e) => [e.date!, e]));
 		const doneOn = (date: string) => habitsDefs.filter((h) => toBool(byDate.get(date)?.values[h.key]) === true).length;
@@ -203,12 +205,12 @@ function fieldSummary(parent: HTMLElement, ctx: DashboardContext, f: TrackerFiel
 		}
 		case "status": {
 			const c = statusCounts(entries, f);
-			headline.setText(c.filter((x) => x.count).slice(0, 3).map((x) => `${x.value} ${x.count}`).join(" · ") || "—");
+			headline.setText(c.filter((x) => x.count).slice(0, 3).map((x) => `${x.value} ${x.count}`).join(" · ") || "-");
 			break;
 		}
 		case "rating": {
 			const r = ratingDistribution(entries.filter((e) => !e.date || (e.date >= start && e.date <= end)), f);
-			headline.setText(r.count ? `★ ${r.avg.toFixed(1)} · ${r.count}` : "—");
+			headline.setText(r.count ? `★ ${r.avg.toFixed(1)} · ${r.count}` : "-");
 			sparkline(spark, dailySeries(entries, f, sparkStart, end).map((p) => p.value), "line");
 			break;
 		}
@@ -218,7 +220,7 @@ function fieldSummary(parent: HTMLElement, ctx: DashboardContext, f: TrackerFiel
 		default: {
 			const n = numericStats(entries, f, start, end);
 			const last = latest(entries, f, end);
-			headline.setText(!n.count ? "—" : isSumField(f) ? `${formatNum(n.total, f.unit)} · avg ${formatNum(n.avg)}` : `${formatNum(last ?? n.avg, f.unit)} · avg ${formatNum(n.avg)}`);
+			headline.setText(!n.count ? "-" : isSumField(f) ? `${formatNum(n.total, f.unit)} · avg ${formatNum(n.avg)}` : `${formatNum(last ?? n.avg, f.unit)} · avg ${formatNum(n.avg)}`);
 			const series = dailySeries(entries, f, sparkStart, end).map((p) => p.value);
 			sparkline(spark, series, isSumField(f) ? "bar" : "line");
 		}
@@ -274,7 +276,7 @@ function fieldDetail(grid: HTMLElement, ctx: DashboardContext, f: TrackerField, 
 			tiles(card, [["current streak", `${b.currentStreak}d`], ["longest streak", `${b.longestStreak}d`], ["completion", `${Math.round(b.rate * 100)}%`], ["days done", `${b.trueDays}/${b.days}`]]);
 			const hmStart = days < 84 ? addDays(end, -83) : start;
 			const vals = new Map(entries.filter((e) => e.date && toBool(e.values[f.key]) === true).map((e) => [e.date!, 1]));
-			heatmap(card, vals, hmStart, end, { weekStartsMonday: s.weekStartsMonday, tip: (d, v) => `${moment(d).format("ddd, MMM D")} · ${v ? "done" : "—"}` });
+			heatmap(card, vals, hmStart, end, { weekStartsMonday: s.weekStartsMonday, tip: (d, v) => `${moment(d).format("ddd, MMM D")} · ${v ? "done" : "-"}` });
 			break;
 		}
 		case "status": {
@@ -290,7 +292,7 @@ function fieldDetail(grid: HTMLElement, ctx: DashboardContext, f: TrackerField, 
 		case "rating": {
 			const inR = entries.filter((e) => !e.date || (e.date >= start && e.date <= end));
 			const r = ratingDistribution(inR, f);
-			tiles(card, [["average", r.count ? r.avg.toFixed(2) : "—"], ["ratings", String(r.count)]]);
+			tiles(card, [["average", r.count ? r.avg.toFixed(2) : "-"], ["ratings", String(r.count)]]);
 			hbars(card, r.dist.map((n, i) => ({ label: "★".repeat(i + 1), value: n })).reverse());
 			const series = dailySeries(entries, f, start, end);
 			if (series.filter((p) => p.value !== null).length >= 3) lineChart(card, series.map((p) => ({ ...p, label: short(p.date) })), { height: 110 });
@@ -316,10 +318,10 @@ function fieldDetail(grid: HTMLElement, ctx: DashboardContext, f: TrackerField, 
 		}
 		default: {
 			const n = numericStats(entries, f, start, end);
-			const trend = n.trend === null ? "—" : `${n.trend >= 0 ? "↑" : "↓"} ${Math.abs(Math.round(n.trend * 100))}%`;
+			const trend = n.trend === null ? "-" : `${n.trend >= 0 ? "↑" : "↓"} ${Math.abs(Math.round(n.trend * 100))}%`;
 			const last = latest(entries, f, end);
 			tiles(card, [
-				isSumField(f) ? ["total", formatNum(n.total, f.unit)] : ["latest", last === null ? "—" : formatNum(last, f.unit)],
+				isSumField(f) ? ["total", formatNum(n.total, f.unit)] : ["latest", last === null ? "-" : formatNum(last, f.unit)],
 				["average", formatNum(n.avg)], ["min / max", `${formatNum(n.min)} / ${formatNum(n.max)}`],
 				[isSumField(f) ? "vs prev." : "entries", isSumField(f) ? trend : String(n.count)],
 			]);
@@ -348,7 +350,7 @@ function fieldDetail(grid: HTMLElement, ctx: DashboardContext, f: TrackerField, 
 	if (gp) goalBar(card, f, gp);
 }
 
-/** Table view of entries — the accessible, exact-values companion to the charts. */
+/** Table view of entries: the accessible, exact-values companion to the charts. */
 function entriesTable(parent: HTMLElement, ctx: DashboardContext, def: TrackerDef, entries: TrackerEntry[], start: string, end: string): void {
 	const rows = entries.filter((e) => !e.date || (e.date >= start && e.date <= end))
 		.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "") || a.name.localeCompare(b.name)).slice(0, 60);
@@ -366,7 +368,7 @@ function entriesTable(parent: HTMLElement, ctx: DashboardContext, def: TrackerDe
 	const tbody = table.createEl("tbody");
 	for (const e of rows) {
 		const r = tbody.createEl("tr");
-		r.createEl("td", { text: e.date ?? "—" });
+		r.createEl("td", { text: e.date ?? "-" });
 		if (showName) r.createEl("td", { text: e.name });
 		for (const f of def.fields) {
 			const v = e.values[f.key];

@@ -62,7 +62,7 @@ export function renderNotesTab(el: HTMLElement, ctx: DashboardContext, st: Notes
 		t.createDiv({ cls: "sbd-muted", text: hint });
 		b.onclick = () => new NewNoteModal(ctx.app, plugin, kind, (path) => ctx.openPath(path, undefined, true)).open();
 	};
-	btn("fleeting", "zap", "Fleeting note", "A quick thought — process it later in the Inbox");
+	btn("fleeting", "zap", "Fleeting note", "A quick thought to process later in the Inbox");
 	btn("literature", "book-open", "Literature note", "What a book, article or video says, in your words");
 	btn("permanent", "gem", "Permanent note", "One idea, in your own words, linked to others");
 
@@ -151,7 +151,7 @@ export function renderNotesTab(el: HTMLElement, ctx: DashboardContext, st: Notes
 
 function suggestionList(el: HTMLElement, ctx: DashboardContext, note: NoteInfo, notes: NoteInfo[]): void {
 	const sugg = suggestLinks(note, notes, ctx.app.metadataCache.resolvedLinks, 5);
-	if (!sugg.length) { el.createDiv({ cls: "sbd-muted", text: "No obvious matches — try tagging it or giving it a more specific title." }); return; }
+	if (!sugg.length) { el.createDiv({ cls: "sbd-muted", text: "No obvious matches. Try tagging it or giving it a more specific title." }); return; }
 	for (const s of sugg) {
 		const row = el.createDiv({ cls: "sbd-suggest" });
 		row.createSpan({ cls: "sbd-note-name", text: s.note.name });

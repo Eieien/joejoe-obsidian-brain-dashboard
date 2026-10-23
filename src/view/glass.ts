@@ -1,4 +1,4 @@
-// Glass mode: Obsidian has no see-through window on every platform, so we fake it —
+// Glass mode: Obsidian has no see-through window on every platform, so we fake it:
 // a wallpaper behind the whole app, with every pane frosted on top of it.
 
 import type SecondBrainPlugin from "../main";

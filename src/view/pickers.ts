@@ -77,7 +77,7 @@ export class ImagePickerModal extends Modal {
 			const q = this.query.toLowerCase();
 			const images = this.app.vault.getFiles().filter((f) => isImagePath(f.path) && f.path.toLowerCase().includes(q) && (!this.onlyGifs || f.extension.toLowerCase() === "gif"))
 				.sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 60);
-			if (!images.length) grid.createDiv({ cls: "sbd-empty", text: q || this.onlyGifs ? `No ${this.onlyGifs ? "GIFs" : "images"} match.` : "No images in this vault yet — upload one above." });
+			if (!images.length) grid.createDiv({ cls: "sbd-empty", text: q || this.onlyGifs ? `No ${this.onlyGifs ? "GIFs" : "images"} match.` : "No images in this vault yet. Upload one above." });
 			for (const img of images) {
 				const cell = grid.createDiv({ cls: "sbd-picker-cell", attr: { "aria-label": img.path } });
 				cell.createEl("img", { attr: { src: this.app.vault.getResourcePath(img), loading: "lazy", alt: img.name } });

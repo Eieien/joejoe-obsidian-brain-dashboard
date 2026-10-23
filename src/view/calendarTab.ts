@@ -209,7 +209,7 @@ function renderWeek(el: HTMLElement, ctx: DashboardContext, days: string[], laye
 		}
 		const body = col.createDiv({ cls: "sbd-week-body" });
 		const shown = list.filter((i) => i.kind !== "daily");
-		if (!shown.length) body.createDiv({ cls: "sbd-empty", text: "—" });
+		if (!shown.length) body.createDiv({ cls: "sbd-empty", text: "-" });
 		for (const it of shown) {
 			const c = chip(body, ctx, it);
 			if (it.priority && it.priority !== 3) priorityBadge(c, it.priority);

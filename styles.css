@@ -1658,7 +1658,7 @@ input.sbd-sec-label-edit:hover, input.sbd-sec-label-edit:focus { background: var
 .sbd-page-head.has-hero .sbd-page-title { max-width: 46%; font-size: clamp(2.4em, 4.4vw, 3.6em); line-height: 1.02; }
 .sbd-page-head.has-hero .sbd-quote { position: relative; max-width: 46%; background: color-mix(in srgb, var(--sbd-surface) 70%, transparent); backdrop-filter: blur(2px); }
 
-/* Light mode: screen would wash the picture out — sit it on a dark plate instead */
+/* Light mode: screen would wash the picture out, so sit it on a dark plate instead */
 .theme-light .sbd-hero-frame { background: #000; border-radius: 14px; -webkit-mask-image: none; mask-image: none; overflow: hidden; }
 .theme-light .sbd-hero-frame { mix-blend-mode: normal; }
 .theme-light .sbd-page-head.has-hero { margin-top: 24px; }
@@ -1672,7 +1672,7 @@ input.sbd-sec-label-edit:hover, input.sbd-sec-label-edit:focus { background: var
 }
 @media (prefers-reduced-motion: reduce) { .sbd-hero-img { transition: none; opacity: 1; transform: none; } }
 
-/* ---------- Split panels, blended: no band — gaps and edges show the page itself ---------- */
+/* ---------- Split panels, blended: no band; gaps and edges show the page itself ---------- */
 .sbd-root .sbd-gallery-band, .theme-light .sbd-root .sbd-gallery-band { background: transparent; padding: 44px 32px 12px; }
 .sbd-gallery-band .sbd-panel-gap { display: none; }
 .sbd-panels {
@@ -1832,7 +1832,7 @@ input.sbd-sec-label-edit:hover, input.sbd-sec-label-edit:focus { background: var
 .sbd-money-month { display: flex; align-items: center; gap: 4px; margin-right: auto; }
 .sbd-money-title { font-family: var(--sbd-display); font-weight: 400; font-size: 1.7em; margin: 0 6px; letter-spacing: -0.01em; }
 
-/* quick add — one sentence */
+/* quick add: one sentence */
 .sbd-money-add {
 	display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
 	padding: 10px 12px; border-radius: 14px; background: var(--sbd-card); box-shadow: inset 0 0 0 1px var(--sbd-border);
@@ -2594,7 +2594,7 @@ body.theme-light.is-translucent:not(.is-fullscreen) .sbd-root :is(.sbd-ph-captio
 
 /* ==========================================================================
    Glass mode (plugin): wallpaper behind all of Obsidian, frosted panes.
-   Works on any system — no OS translucency needed.
+   Works on any system; no OS translucency needed.
    ========================================================================== */
 body.sbd-glass .app-container {
 	background:
@@ -2655,7 +2655,7 @@ body.sbd-glass .sbd-root {
 body.theme-light.sbd-glass .sbd-root { background: rgba(250, 246, 238, calc(var(--sbd-glass-alpha, .62) * .7)) !important; }
 
 /* ==========================================================================
-   Glass mode v2 — tinted by a setting (neutral by default) so the wallpaper's
+   Glass mode v2: tinted by a setting (neutral by default) so the wallpaper's
    own colours come through; separate pane and card opacity; real light mode.
    ========================================================================== */
 body.sbd-glass { --sbd-glass-rgb: var(--sbd-glass-dark-rgb, 14, 14, 16); --sbd-glass-edge: rgba(255, 255, 255, .09); --sbd-glass-edge-hi: rgba(255, 255, 255, .16); }
@@ -2723,7 +2723,7 @@ body.theme-light.sbd-glass { --sbd-pane: rgba(var(--sbd-glass-rgb), calc(var(--s
 .sbd-sidebar .sbd-tab:not(.is-active):not(:hover) .sbd-picon-accent.is-fill { fill: currentColor; fill-opacity: calc(var(--o, 1) * .6); }
 
 /* ===================== Light mode fixes ===================== */
-/* Blended cover: no dark plate — the image blends straight into the page, edges feathered */
+/* Blended cover: no dark plate; the image blends straight into the page, edges feathered */
 .theme-light .sbd-hero-frame {
 	background: none; border-radius: 0; overflow: visible;
 	-webkit-mask-image: linear-gradient(to right, transparent 0, #000 38%, #000 80%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 16%, #000 48%, transparent 90%);
@@ -2833,3 +2833,20 @@ body.sbd-glass :is(.sbd-minical-day.is-today, .sbd-tooltip, .sbd-habit-pill.is-o
 	color: rgb(var(--sbd-glass-rgb)) !important;
 }
 body.sbd-glass .sbd-dm-cta { color: rgb(var(--sbd-glass-rgb)) !important; }
+
+/* ===================== No more filled icon tiles: glyphs and fine rings ===================== */
+.sbd-home-card-icon { width: 34px; height: 34px; padding: 0; background: none !important; color: var(--sbd-ink); border-radius: 0; }
+.sbd-home-card-icon .sbd-picon { width: 34px; height: 34px; }
+.sbd-courses-empty-icon { width: 56px; height: 56px; padding: 0; background: none !important; color: var(--sbd-ink); border-radius: 0; }
+.sbd-courses-empty-icon .sbd-picon { width: 56px; height: 56px; }
+.sbd-sec-gate-icon {
+	background: transparent !important; color: var(--interactive-accent); border-radius: 50%;
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 45%, transparent);
+}
+.sbd-sec-gate-icon svg { stroke-width: 1.5; }
+.sbd-sec-item-icon {
+	background: transparent !important; border: none !important; border-radius: 50%;
+	color: var(--sbd-ink-2); box-shadow: inset 0 0 0 1px var(--sbd-border);
+}
+.sbd-sec-item-icon svg { stroke-width: 1.6; }
+.sbd-sec-item.is-active .sbd-sec-item-icon { color: var(--interactive-accent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 50%, transparent); }
