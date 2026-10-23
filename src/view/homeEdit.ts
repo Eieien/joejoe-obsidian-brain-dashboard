@@ -179,7 +179,7 @@ export class HomeLayoutModal extends Modal {
 		new Setting(contentEl).setName("Look").setHeading();
 		new Setting(contentEl).setName("Style").addDropdown((d) => d.addOption("mono", "Mono page").addOption("gallery", "Gallery (warm, serif)").addOption("theme", "Theme native")
 			.setValue(a.style).onChange((v) => { a.style = v as PageStyle; }));
-		new Setting(contentEl).setName("Cover style").addDropdown((d) => d.addOption("hero", "Blended hero").addOption("panels", "Split panels (b&w)").addOption("full", "Full image")
+		new Setting(contentEl).setName("Cover style").addDropdown((d) => d.addOption("hero", "Blended hero").addOption("panels", "Split panels").addOption("full", "Full image")
 			.setValue(a.coverStyle ?? "panels").onChange((v) => { a.coverStyle = v as CoverStyle; }));
 		new Setting(contentEl).setName("Dark mode surfaces").setDesc("Only affects dark mode.").addDropdown((d) => {
 			DARK_SURFACES.forEach((o) => d.addOption(o.value, o.label));

@@ -1,4 +1,4 @@
-// Default cover for the split-panel header: a black-and-white mountain landscape,
+// Default cover for the split-panel header (when no image is set): a mountain landscape,
 // drawn once on a canvas (deterministic) and cached as a data URL.
 
 const CACHE_KEY = "sbd-landscape-v1";

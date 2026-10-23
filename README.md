@@ -36,7 +36,7 @@ It doesn't ask you to reorganize anything. It reads the notes, tasks and frontma
 ### Home: a page you can make your own
 - **Cover:** pick an image from your vault, upload one, paste a link, or drop/paste a file (GIFs animate). There are four cover layouts, switched from the toolbar that appears when you hover the cover:
   - **Blended:** the image melts into the page and the title sits beside it. Dark backgrounds disappear into the page, and the image's own edges feather out, so moved or narrow photos never show a seam. In light mode, art made for dark pages keeps a soft dark backdrop.
-  - **Panels:** the image split into five black-and-white panels with gaps that show the page. With no image, it draws a black-and-white mountain landscape.
+  - **Panels:** the image split into five panels with gaps that show the page. It keeps its colours and blends in like Blended: dark backgrounds melt into the page and the edges feather out. With no image, it draws a mountain landscape.
   - **Single:** one image across the top.
   - **Editorial:** a big title over an image band, with today's quote, an outlined date and today's facts.
 - **Reposition:** drag the image in any direction, rotate it (±45°) and zoom it (100–250%) with sliders, arrow keys, `[` `]`, `+` `−` or the scroll wheel. **Reset**, **Cancel** (Esc) and **Save** (Enter). Every cover change can be undone from the notice it shows.

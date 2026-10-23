@@ -2813,3 +2813,23 @@ body.theme-light.sbd-glass .sbd-glance-chip { background: rgba(255, 255, 255, .5
 button.sbd-money-cat-icon:hover { box-shadow: inset 0 0 0 1.5px var(--c, var(--sbd-ink-2)) !important; }
 .sbd-money-tx:hover .sbd-money-cat-icon, .sbd-money-catrow:hover .sbd-money-cat-icon { box-shadow: inset 0 0 0 1px var(--c) !important; }
 /* the swatches in the legend / strip stay solid */
+
+/* ===================== Panels: colour, blended like the hero ===================== */
+.sbd-panels { filter: none; }
+.theme-dark .sbd-panels { mix-blend-mode: lighten; filter: saturate(.94) brightness(.97); }
+.theme-light .sbd-panels { mix-blend-mode: normal; filter: none; }
+/* feather the strip's sides as well as its top and bottom */
+.sbd-panels {
+	--sbd-fade-x: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+	-webkit-mask-image: var(--sbd-gaps), var(--sbd-fade), var(--sbd-fade-x);
+	-webkit-mask-composite: source-in, source-in;
+	mask-image: var(--sbd-gaps), var(--sbd-fade), var(--sbd-fade-x);
+	mask-composite: intersect, intersect;
+}
+@keyframes sbd-panels-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* Glass mode: the page surface is transparent, so text on ink-coloured fills uses the solid frost colour */
+body.sbd-glass :is(.sbd-minical-day.is-today, .sbd-tooltip, .sbd-habit-pill.is-on .sbd-hbox, .sbd-hcheck.is-on, .sbd-habit-chip.is-on, .sbd-dm-day.is-selected, .sbd-cover-bar.is-inline .sbd-cover-seg .sbd-cover-btn.is-active) {
+	color: rgb(var(--sbd-glass-rgb)) !important;
+}
+body.sbd-glass .sbd-dm-cta { color: rgb(var(--sbd-glass-rgb)) !important; }

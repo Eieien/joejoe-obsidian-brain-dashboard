@@ -31,7 +31,7 @@ export function applyCoverView(layer: HTMLElement, v: CoverView, mode: "object" 
 const LAYOUTS: { id: CoverStyle; label: string; icon: string; hint: string }[] = [
 	{ id: "editorial", label: "Editorial", icon: "newspaper", hint: "Big title over an image band, date and today's facts" },
 	{ id: "hero", label: "Blended", icon: "sparkles", hint: "Image melts into the page, title beside it" },
-	{ id: "panels", label: "Panels", icon: "columns-3", hint: "Split into black-and-white panels" },
+	{ id: "panels", label: "Panels", icon: "columns-3", hint: "Split into panels that blend into the page" },
 	{ id: "full", label: "Single", icon: "rectangle-horizontal", hint: "One image across the top" },
 ];
 

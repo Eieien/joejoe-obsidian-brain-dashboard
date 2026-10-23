@@ -104,7 +104,7 @@ export function styleClasses(a: AppearanceSettings): string[] {
 }
 
 export type PageStyle = "mono" | "gallery" | "theme";
-/** full: image across the top · panels: split b&w strip · hero: image blended into the page, title beside it. */
+/** full: image across the top · panels: the image split into blended panels · hero: image blended into the page, title beside it. */
 export type CoverStyle = "full" | "panels" | "hero" | "editorial";
 
 export interface AppearanceSettings {
@@ -120,7 +120,7 @@ export interface AppearanceSettings {
 	bannerRotate: number;
 	bannerZoom: number;
 	style: PageStyle;
-	/** Cover layout: one image, or split into black-and-white panels. */
+	/** Cover layout (see CoverStyle). */
 	coverStyle: CoverStyle;
 	/** How grey surfaces look in dark mode. */
 	darkSurface: DarkSurface;
@@ -548,8 +548,8 @@ export class DashboardSettingTab extends PluginSettingTab {
 				.setValue(a.style).onChange(async (v) => { a.style = v as PageStyle; await save(); }));
 		new Setting(containerEl)
 			.setName("Cover style")
-			.setDesc("Blended hero: the cover's dark background melts into the page and the title sits beside it (best with images on black). Panels: a dark band with the cover split into black-and-white panels. Full: one image across the top.")
-			.addDropdown((d) => d.addOption("hero", "Blended hero").addOption("panels", "Split panels (b&w)").addOption("full", "Full image")
+			.setDesc("Blended hero: the cover's dark background melts into the page and the title sits beside it (best with images on black). Panels: the cover split into five panels that blend into the page the same way. Full: one image across the top.")
+			.addDropdown((d) => d.addOption("hero", "Blended hero").addOption("panels", "Split panels").addOption("full", "Full image")
 				.setValue(a.coverStyle ?? "panels").onChange(async (v) => { a.coverStyle = v as CoverStyle; await save(); }));
 		new Setting(containerEl)
 			.setName("Dark mode surfaces")

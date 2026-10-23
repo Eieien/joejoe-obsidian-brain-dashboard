@@ -114,8 +114,8 @@ function heroCover(top: HTMLElement, ctx: DashboardContext): void {
 }
 
 /**
- * Split-panel cover: a dark band holding one black-and-white image cut into five
- * panels by gaps in the band colour. Uses the chosen cover, else a drawn landscape.
+ * Split-panel cover: one image cut into five panels that blend into the page like
+ * the blended cover (colour kept, dark areas melt away, edges feathered).
  */
 function galleryCover(top: HTMLElement, ctx: DashboardContext): void {
 	const a = ctx.plugin.settings.appearance;
