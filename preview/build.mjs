@@ -83,7 +83,7 @@ svg.svg-icon { stroke-width: 1.75; }
 fs.writeFileSync(`${OUT}/index.html`, `<!doctype html>
 <html><head><meta charset="utf-8"><title>joejoe's second brain · preview</title>
 <style>${themeVars}</style>
-<style id="obsidian-button-default">button:not(.clickable-icon):not(.mod-cta){background-color:#363636;box-shadow:0 1px 1px rgba(0,0,0,.25);border:0}</style>
+<style id="obsidian-button-default">button:not(.clickable-icon):not(:where(.mod-cta)){background-color:#363636;box-shadow:0 1px 1px rgba(0,0,0,.25);border:0}</style>
 <style>${fs.readFileSync("styles.css", "utf8")}</style>
 <style id="obs-theme" media="not all">${fs.readFileSync("theme/Joejoe Gallery/theme.css", "utf8")}
 body { --font-interface: var(--font-interface-theme); --font-text: var(--font-text-theme); font-family: var(--font-interface); }</style>

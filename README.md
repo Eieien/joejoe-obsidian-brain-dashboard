@@ -67,6 +67,7 @@ It doesn't ask you to reorganize anything. It reads the notes, tasks and frontma
 - Each project gets its own page: a stat strip, an **editable description** (saved to the note's `description` property), open tasks by status, weekly activity, deadlines, linked notes, daily-note mentions and recently completed tasks.
 
 ### Courses (school)
+![Courses](docs/screenshots/courses.png)
 Your subjects, each with a code, instructor, schedule, room, units, semester and colour. They work like projects, and each can be **active** or **inactive** for the semester.
 - **Courses tab:** cards for *This semester* and, collapsed, *Not this semester*. Each card has a progress bar, open/urgent/overdue counts, the next due date, a quick **+** to add a task, and an **Active** switch. Right-click a card for more.
 - **Plan semester:** name the term and tick the courses you're taking. Everything else goes inactive, and the term is written onto the ticked courses.
@@ -81,6 +82,7 @@ Your subjects, each with a code, instructor, schedule, room, units, semester and
 - **Other trackers** for numbers or stages (weight, workouts, job applications…) read from daily-note fields, one note per item, or a Markdown table, and give you totals, trends, funnels, goals and an entries table.
 
 ### Money: income and expenses
+![Money](docs/screenshots/money.png)
 A monthly view of what came in and what went out (PHP by default).
 - **Summary first:** *Left to spend* in large type with the per-day allowance, a budget bar and a budget ring with an even-pace marker, then Received, Spent, Net and Saved %.
 - **Your budgets:** **Today**, **This week** and **This month**, each against its own budget, with a meter that turns amber near the limit and red when over.
@@ -122,6 +124,8 @@ A small password manager for API keys, tokens (PATs), logins and secure notes, s
 ---
 
 ## Look and feel
+
+![Home in light mode](docs/screenshots/home-light.png)
 
 - **Page styles:** *Mono* (a Notion-like monospace page), *Gallery* (warm espresso and parchment with serif titles) or *Theme native* (your theme's fonts). **Dark mode surfaces:** theme default, darker, plain or black.
 - **Glass mode:** a wallpaper behind all of Obsidian, with every pane frosted on top of it (editor, sidebars, tabs, the dashboard, modals and menus). It works on any system and any theme, with no OS setting needed. You can set the wallpaper (it defaults to your cover image), **tint** (neutral, cool or warm), **frost**, **pane opacity**, **card opacity** and **dim**. Light mode gets warm-white frost with visible edges.
