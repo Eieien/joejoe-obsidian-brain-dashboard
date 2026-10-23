@@ -6,6 +6,8 @@ It doesn't ask you to reorganize anything. It reads the notes, tasks and frontma
 
 ![Home](docs/screenshots/home.png)
 
+*Screenshots use the Gallery style, the Joejoe Gallery theme and [Glass mode](#look-and-feel) with a wallpaper.*
+
 ---
 
 ## Contents

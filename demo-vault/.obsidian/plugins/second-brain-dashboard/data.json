@@ -103,7 +103,16 @@
         "id": "lab",
         "hidden": false
       }
-    ]
+    ],
+    "glass": {
+      "enabled": true,
+      "wallpaper": "_images/demo-wallpaper.jpg",
+      "blur": 24,
+      "opacity": 30,
+      "dim": 25,
+      "tint": "neutral",
+      "cardOpacity": 40
+    }
   },
   "quickLinks": [
     {
